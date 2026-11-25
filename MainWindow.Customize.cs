@@ -175,9 +175,9 @@ public partial class MainWindow
     // ================================================================ tabs: order and which ones are shown
 
     private static readonly string[] DefaultTabOrder =
-        ["TabHome", "TabNotify", "TabMeeting", "TabMusic", "TabWeather", "TabChat", "TabTimer", "TabClip", "TabNotes", "TabCalendar", "TabSystem", "TabWidgets"];
+        ["TabHome", "TabNotify", "TabMeeting", "TabChat", "TabNotes", "TabClip", "TabSettings"];
 
-    private RadioButton[] AllPageTabs => [TabHome, TabNotify, TabMeeting, TabMusic, TabWeather, TabChat, TabTimer, TabClip, TabNotes, TabCalendar, TabSystem, TabWidgets];
+    private RadioButton[] AllPageTabs => [TabHome, TabNotify, TabMeeting, TabChat, TabNotes, TabClip];
 
     private RadioButton[]? _pageTabs;
 
@@ -189,7 +189,8 @@ public partial class MainWindow
         var all = AllPageTabs;
         var order = _settings.TabOrder.Where(n => all.Any(t => t.Name == n)).Distinct().ToList();
         order.AddRange(DefaultTabOrder.Where(n => !order.Contains(n)));
-        return order.Select(n => all.First(t => t.Name == n)).ToList();
+        // a saved order can name a page that is gone (an update removed it): those are just skipped
+        return order.Select(n => all.FirstOrDefault(t => t.Name == n)).Where(t => t != null!).ToList();
     }
 
     private void ApplyTabLayout()
@@ -310,7 +311,7 @@ public partial class MainWindow
             foreach (var (id, text) in options)
             {
                 var chip = new RadioButton { Style = (Style)FindResource("Segment"), GroupName = group, Content = text, IsChecked = get() == id, Margin = new Thickness(0, 0, 4, 4) };
-                chip.Checked += (_, _) => { set(id); _settings.Save(); OnTick(); UpdatePillRight(); };
+                chip.Checked += (_, _) => { set(id); _settings.Save(); OnTick(); };
                 chips.Children.Add(chip);
             }
             row.Children.Add(chips);
@@ -362,7 +363,6 @@ public partial class MainWindow
 
         // desktop widgets
         var widgets = new Button { Style = (Style)FindResource("AccentPill"), Content = L.T("Изменить виджеты"), Padding = new Thickness(14, 7, 14, 7), HorizontalAlignment = HorizontalAlignment.Left };
-        widgets.Click += (_, _) => EditWidgets(true);
         host.Children.Add(Tile(L.T("ВИДЖЕТЫ НА РАБОЧЕМ СТОЛЕ"),
             Hint(L.T("Стеклянные карточки на рабочем столе: музыка, погода, часы, календарь, таймер, заметки, загрузка процессора, видеокарты, памяти, диска и сети. Добавляйте их и двигайте в режиме изменения.")),
             widgets));
@@ -379,18 +379,6 @@ public partial class MainWindow
                 ApplyTabLayout();
             })));
 
-        // the buttons on Home
-        var chosen = _settings.Actions.Where(id => AllActions.Any(a => a.Id == id)).ToList();
-        var actions = chosen.Concat(AllActions.Select(a => a.Id).Where(id => !chosen.Contains(id)))
-            .Select(id => new StripItem(id, AllActions.First(a => a.Id == id).Label, chosen.Contains(id)));
-        host.Children.Add(Tile(L.T("КНОПКИ НА ГЛАВНОЙ"),
-            Hint(L.T("Перетащите, чтобы поменять порядок. Нажмите, чтобы убрать кнопку или вернуть её.")),
-            ReorderStrip(actions, state =>
-            {
-                _settings.Actions = state.Where(s => s.On).Select(s => s.Id).ToList();
-                _settings.Save();
-                BuildHome();
-            })));
     }
 
     // ================================================================ shape, shadow, font, clock, hover
@@ -424,8 +412,7 @@ public partial class MainWindow
     private void UpdateIdleDim()
     {
         if (_hidden || _fullscreenHidden) { _idleDim = null; return; }
-        bool dim = _settings.IdleOpacity < 100 && _mode == Mode.Compact && !Island.IsMouseOver && !_editMode && !_dragging
-                   && _reach.Target < 0.02 && !_recording.IsRecording && _demoMedia == null;
+        bool dim = _settings.IdleOpacity < 100 && _mode == Mode.Compact && !Island.IsMouseOver && !_editMode && !_dragging && _reach.Target < 0.02;
         if (dim == _idleDim) return;
         _idleDim = dim;
         Fade(Island, dim ? Math.Clamp(_settings.IdleOpacity, 30, 100) / 100.0 : 1, dim ? 600 : 160, dim ? 900 : 0);
@@ -433,7 +420,6 @@ public partial class MainWindow
 
     // ================================================================ what the idle pill shows
 
-    private TextBlock? _pillBattery;
 
     /// <summary>The clock in the middle of the idle pill: the time, the time and the date, or the date.</summary>
     private string PillClockText(string time)
@@ -459,24 +445,6 @@ public partial class MainWindow
         }
         catch { return -1; }
     }
-
-    /// <summary>The right side of the idle pill: weather, battery or nothing (music's bars take the place while it plays).</summary>
-    private void UpdatePillRight()
-    {
-        bool playing = _lastMedia?.IsPlaying == true;
-        int battery = _settings.PillRight == "battery" ? (_demoMedia != null ? 87 : BatteryPercent()) : -1;
-        CompactWeather.Visibility = !playing && _settings.PillRight == "weather" ? Visibility.Visible : Visibility.Collapsed;
-        if (battery < 0) { if (_pillBattery != null) _pillBattery.Visibility = Visibility.Collapsed; return; }
-        if (_pillBattery == null)
-        {
-            _pillBattery = new TextBlock { FontSize = 13, FontWeight = FontWeights.SemiBold, VerticalAlignment = VerticalAlignment.Center };
-            _pillBattery.SetResourceReference(TextBlock.ForegroundProperty, "Fg");
-            ((Panel)CompactWeather.Parent).Children.Add(_pillBattery);
-        }
-        _pillBattery.Text = battery + "%";
-        _pillBattery.Visibility = playing ? Visibility.Collapsed : Visibility.Visible;
-    }
-
     /// <summary>The ☰ button: the same menu as a right click on the island, under the button; its lines cross while it is open.</summary>
     private void MenuButton_Click(object sender, RoutedEventArgs e)
     {

@@ -1,4 +1,4 @@
-﻿using System.Windows;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using DynamicIsland.Services;
@@ -104,7 +104,6 @@ public partial class MainWindow
         if (GlassScene) _settings.Glass = true;
         _settings.ThemeId = "";
         _settings.Save();
-        ApplyScene();
         ApplyTheme();
         ApplyThemeLocal();
         ApplyGlass();
@@ -147,7 +146,7 @@ public partial class MainWindow
         name = new string(name.Where(c => !char.IsControl(c)).ToArray());
         if (name.Length is 0 or > 30 || !IsHex(p[2]) || !IsHex(p[3]) || p[1] is not ("0" or "1")) return null;
         var aura = Auras.Any(a => a.Id == p[4]) ? p[4] : "none";
-        var scene = Array.IndexOf(Views.SeasonView.Kinds, p[5]) >= 0 || IsGlassScene(p[5]) ? p[5] : "";
+        var scene = IsGlassScene(p[5]) ? p[5] : "";
         return new CustomTheme { Id = Guid.NewGuid().ToString("N")[..8], Name = name, Dark = p[1] == "1", Island = p[2], Accent = p[3], Aura = aura, Scene = scene };
     }
 

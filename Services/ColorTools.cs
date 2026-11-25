@@ -48,7 +48,7 @@ public static class ColorTools
         for (double k = 1; k > 0.05; k -= 0.04)
         {
             var d = Color.FromRgb((byte)(c.R * k), (byte)(c.G * k), (byte)(c.B * k));
-            if (WallpaperLayout.Contrast(1, WallpaperLayout.Luminance(d)) >= 4.5) return d;
+            if (1.05 / (0.2126 * d.R / 255 + 0.7152 * d.G / 255 + 0.0722 * d.B / 255 + 0.05) >= 4.5) return d;
         }
         return Color.FromRgb((byte)(c.R * 0.05), (byte)(c.G * 0.05), (byte)(c.B * 0.05));
     }

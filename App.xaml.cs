@@ -12,24 +12,6 @@ public partial class App : Application
         base.OnStartup(e);
         WatchCrashes();
 
-        if (e.Args.Contains("--uninstall"))
-        {
-            // the setup's uninstaller: remove Claude Code hooks and autostart, nothing else on screen
-            Uninstaller.RemoveRegistrations();
-            Shutdown();
-            return;
-        }
-
-        int fh = Array.IndexOf(e.Args, "--fps-helper");
-        if (fh >= 0)
-        {
-            // the elevated FPS helper: no window, no single-instance lock, ends with Atoll
-            int.TryParse(e.Args.ElementAtOrDefault(fh + 1), out int parent);
-            ShutdownMode = ShutdownMode.OnExplicitShutdown;
-            new Thread(() => { FpsMeter.RunHelper(parent); Dispatcher.Invoke(Shutdown); }) { IsBackground = true }.Start();
-            return;
-        }
-
         _mutex = new Mutex(true, "Verjot.SingleInstance", out bool created);
         if (!created && e.Args.Contains("--restart"))
         {
@@ -43,11 +25,8 @@ public partial class App : Application
             return;
         }
 
-        // test and picture runs are killed at will: they neither leave nor read the start markers
-        if (!TestRun)
-            StartupGuard.Begin();
-        else
-            MagCapture.UseGuard = false;
+        // test runs are killed at will: they neither leave nor read the start markers
+        if (!TestRun) StartupGuard.Begin();
 
         System.Text.Encoding.RegisterProvider(System.Text.CodePagesEncodingProvider.Instance); // rasdial output
         var settings = Settings.Current;

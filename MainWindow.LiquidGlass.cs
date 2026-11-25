@@ -104,11 +104,17 @@ public partial class MainWindow
     /// The same glass inside: tiles, chips, cards and buttons are clear panes over the one picture, with a 1 px ring
     /// that is brighter on top; the quieter text is brought nearer to the main one, so it reads over any backdrop.
     /// </summary>
-    private void ApplyLiquidBrushes()
+        private static LinearGradientBrush Glass(byte top, byte bottom)
+    {
+        var b = new LinearGradientBrush(Color.FromArgb(top, 0xFF, 0xFF, 0xFF), Color.FromArgb(bottom, 0xFF, 0xFF, 0xFF), 90);
+        b.Freeze();
+        return b;
+    }
+
+private void ApplyLiquidBrushes()
     {
         var r = System.Windows.Application.Current.Resources;
         r.Remove("CardBg");
-        Season.Light = !_settings.DarkTheme;
         if (!GlassScene) return;
         bool dark = _settings.DarkTheme;
         static SolidColorBrush Pane(double a, byte v = 255) { var b = new SolidColorBrush(Color.FromArgb((byte)(a * 255), v, v, v)); b.Freeze(); return b; }

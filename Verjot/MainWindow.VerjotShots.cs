@@ -29,7 +29,7 @@ public partial class MainWindow
         {
             var rtb = new RenderTargetBitmap((int)Math.Ceiling(Root.ActualWidth * 2), (int)Math.Ceiling(Root.ActualHeight * 2), 192, 192, PixelFormats.Pbgra32);
             rtb.Render(Root);
-            CaptureService.SavePng(rtb, Path.Combine(dir, name + ".png"));
+            ScreenGrab.SavePng(rtb, Path.Combine(dir, name + ".png"));
             log.Add($"shot {name}: {Root.ActualWidth:0}x{Root.ActualHeight:0}");
         }
         void Seed(string app, NoticeSource source, string title, string body, int minutesAgo, bool hasBody = true, bool read = false) =>
@@ -99,14 +99,23 @@ public partial class MainWindow
             await Task.Delay(1400);
             Shot("6-meeting-saved");
 
+            TabChat.IsChecked = true;
+            await Task.Delay(900);
+            Shot("7-chat");
             TabNotes.IsChecked = true;
             await Task.Delay(900);
-            Shot("7-notes");
+            Shot("8-notes");
             SetMode(Mode.Compact);
             await Task.Delay(1000);
-            Shot("8-pill-idle");
+            Shot("9-pill-idle");
+            TabHome.IsChecked = true;
+            _pinnedOpen = true;
+            Expand();
+            await Task.Delay(1400);
+            Shot("10-home");
+            SetMode(Mode.Compact);
         }
-        catch (Exception ex) { log.Add("FAILED: " + ex); }
+        catch (Exception ex) { log.Add("FAILED: " + ex + "\n" + ex.StackTrace); }
         File.WriteAllLines(Path.Combine(dir, "verjot-shots.txt"), log);
     }
 

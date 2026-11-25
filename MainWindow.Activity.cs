@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Windows.Media;
 using DynamicIsland.Services;
@@ -41,13 +41,12 @@ public partial class MainWindow
     /// notification center is switched off, or access was refused — a messenger that blinks in the taskbar
     /// still means "a new message": the island says so, without the text.
     /// </summary>
-    private bool FlashFallback => !Settings.Safe && _settings.MirrorNotifications && (!_notifications.Available || NotificationMirror.CenterDisabled());
+    private bool FlashFallback => !Settings.Safe && _settings.MirrorNotifications && (!_toasts.Available || ToastReader.CenterDisabled());
 
     private void OnWindowFlash(IntPtr window)
     {
         // WeChat and WeCom blink in the taskbar instead of sending system toasts: their blink is an alert of its own
         if (OnTaskbarBlink(window)) return;
-        if (!FlashFallback || _demoMedia != null || window == IntPtr.Zero || window == _hwnd) return;
         if (window == Native.GetForegroundWindow()) return;   // you are looking at it
         string name;
         try
@@ -87,7 +86,6 @@ public partial class MainWindow
     /// </summary>
     private void WatchMessengerTitles()
     {
-        if (!FlashFallback || _demoMedia != null) return;
         if (++_titlePolls % 150 == 0) _titleNames.Clear();   // process ids get reused
         var fg = Native.GetForegroundWindow();
         var seen = new List<(IntPtr Window, string App, int Count)>();
@@ -139,7 +137,7 @@ public partial class MainWindow
     /// <summary>Once a second: with "follow the mouse" on, the folded island hops to the monitor you work on.</summary>
     private void WatchMonitor()
     {
-        if (!_settings.FollowMonitor || _dragging || _hidden || _fullscreenHidden || _mode != Mode.Compact || _liveDemo) return;
+        if (!_settings.FollowMonitor || _dragging || _hidden || _fullscreenHidden || _mode != Mode.Compact || false) return;
         if (Forms.Screen.AllScreens.Length < 2) return;
         double dpi = Dpi;
         var cur = Forms.Screen.FromPoint(Forms.Cursor.Position);

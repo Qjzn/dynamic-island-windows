@@ -71,15 +71,8 @@ public partial class MainWindow
         };
         bool current = _settings.ThemeId == t.Id;
         FrameworkElement inside = pill;
-        if (Array.IndexOf(Views.SeasonView.Kinds, t.Scene) >= 0)
         {
-            var scene = new Views.SeasonView { Kind = t.Scene, Width = 92, Height = 54, IsHitTestVisible = false };
-            for (int i = 0; i < 40; i++) scene.Step(0.05);   // a moment into the scene, not its empty first frame
             var grid = new Grid { ClipToBounds = true };
-            grid.Children.Add(scene);
-            grid.Children.Add(pill);
-            grid.Clip = new RectangleGeometry(new Rect(0, 0, 92, 54), 12, 12);
-            inside = grid;
         }
         var card = new Border
         {
@@ -108,7 +101,6 @@ public partial class MainWindow
         _settings.Scene = t.Scene;
         if (IsGlassScene(t.Scene)) _settings.Glass = true;   // a glass theme is glass
         _settings.Save();
-        ApplyScene();
         ApplyTheme();
         ApplyThemeLocal();
         ApplyGlass();

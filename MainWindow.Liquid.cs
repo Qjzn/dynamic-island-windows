@@ -1,4 +1,4 @@
-﻿using System.Windows;
+using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Effects;
@@ -45,7 +45,6 @@ public partial class MainWindow
 
     private void CountAnimationFrame(double dt)
     {
-        if (_settings.LiteGraphics != null || _slowPcSeen || _demoMedia != null) return;
         _animFrames++;
         if (dt > 0.028) _animSlow++;
         if (_animFrames < 240) return;
@@ -315,10 +314,8 @@ public partial class MainWindow
             }
         }
 
-        bool playing = _lastMedia?.IsPlaying == true && !_hidden && !_fullscreenHidden && !_gameFront && _settings.MusicWaves;
-        double peak = playing ? _audio.Peak : 0;
-        _audioLevel += (peak - _audioLevel) * (peak > _audioLevel ? 0.45 : 0.08);
-        if (!playing && _audioLevel < 0.005) _audioLevel = 0;
+        _audioLevel += (0 - _audioLevel) * 0.08;
+        if (_audioLevel < 0.005) _audioLevel = 0;
 
         _ripple *= Math.Exp(-dt * 2.3);
         if (_ripple < 0.03) _ripple = 0;
@@ -330,9 +327,9 @@ public partial class MainWindow
         _leadX.Step(dt); _leadY.Step(dt); _bodyX.Step(dt); _bodyY.Step(dt);
         IslandShift.X = _bodyX.Value;
         IslandShift.Y = _y.Value + _bodyY.Value;
-        bool shapeMoving = Liquid && (_ripple > 0 || playing || _audioLevel > 0);
+        bool shapeMoving = Liquid && (_ripple > 0 || _audioLevel > 0);
         bool reactive = _settings.Reactive && !Lite && _mode == Mode.Compact &&
-                        (playing || _audioLevel > 0 || !_reach.IsSettled || _reach.Value > 0.01 || !_lean.IsSettled || PullMoving || PullVisible);
+                        (_audioLevel > 0 || !_reach.IsSettled || _reach.Value > 0.01 || !_lean.IsSettled || PullMoving || PullVisible);
         UpdateShape(shapeMoving);
 
         return shapeMoving || reactive || _posActive || !(_sx.IsSettled && _sy.IsSettled && _skew.IsSettled && _press.IsSettled);
@@ -464,8 +461,7 @@ public partial class MainWindow
         var pts = new List<Point>(260);
         double L = 2 * (W - 2 * R) + 2 * (H - 2 * R) + 2 * Math.PI * R;
         int waves = Math.Max(3, (int)Math.Round(L / 150));
-        bool playing = _lastMedia?.IsPlaying == true && _settings.MusicWaves;
-        double drip = (playing ? 1.2 + _audioLevel * 9 : _audioLevel * 9) * LiquidK;
+        double drip = _audioLevel * 9 * LiquidK;
 
         double s = 0;
 

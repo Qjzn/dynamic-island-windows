@@ -48,7 +48,7 @@ public partial class MainWindow
         bool inside = island.Contains(p);
         bool top = inside && p.Y <= System.Windows.Forms.Screen.FromPoint(new System.Drawing.Point(cursor.X, cursor.Y)).Bounds.Top + 1;
         bool under = inside && (_testWindowUnder ?? WindowUnder(island));
-        int change = _yield.Step(_yieldClock.ElapsedMilliseconds, p, inside, top, under, _gameMode || _fullscreenFront);
+        int change = _yield.Step(_yieldClock.ElapsedMilliseconds, p, inside, top, under, _fullscreenFront);
         if (change > 0) StartYield();
         else if (change < 0) StopYield(reopen: inside);
     }

@@ -86,7 +86,6 @@ public partial class MainWindow
 
     private async Task PollAlertsAsync()
     {
-        if (!_settings.MirrorNotifications || _alertsBusy || IsToolRun || _demoMedia != null) return;
         _alertsBusy = true;
         try
         {
@@ -115,7 +114,6 @@ public partial class MainWindow
     /// </summary>
     private bool OnTaskbarBlink(IntPtr window)
     {
-        if (window == IntPtr.Zero || window == _hwnd || _demoMedia != null || IsToolRun) return false;
         if (!_settings.MirrorNotifications || window == Native.GetForegroundWindow()) return false;   // you are looking at it
         Native.GetWindowThreadProcessId(window, out uint pid);
         string name;
@@ -182,7 +180,6 @@ public partial class MainWindow
             NotifyEmpty.Visibility = Visibility.Collapsed;
             return;
         }
-        if (FocusMode.IsOn) return;   // quiet: only the counter grows
         if (_mode is Mode.Expanded or Mode.Claude or Mode.Drop or Mode.Command)
         {
             ShowAlertToast(n);   // beside the open island; the island itself is not folded

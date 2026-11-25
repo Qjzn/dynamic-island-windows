@@ -9,111 +9,9 @@ using DynamicIsland.Services;
 
 namespace DynamicIsland;
 
-/// <summary>Timer, clipboard history, notes, calendar tabs and dropping files on the island.</summary>
+/// <summary>Clipboard history and notes, plus the home page's quick entries.</summary>
 public partial class MainWindow
 {
-    // ================================================================ timer tab
-
-    private static readonly int[] TimerPresetMinutes = [1, 3, 5, 10, 15, 25, 45, 60];
-
-    private void InitTimerPage()
-    {
-        foreach (var m in TimerPresetMinutes)
-        {
-            var b = new Button
-            {
-                Style = (Style)FindResource("Pill"),
-                Content = m < 60 ? L.F("{0} мин", m) : L.T("1 ч"),
-                Padding = new Thickness(11, 5, 11, 5),
-                Margin = new Thickness(0, 0, 6, 6),
-            };
-            b.Click += (_, _) =>
-            {
-                _timer.SetKind(TimerKind.Timer);
-                _timer.SetDuration(TimeSpan.FromMinutes(m));
-                TimerMinutesBox.Text = m.ToString();
-                _timer.Start();
-                RenderTimer();
-            };
-            TimerPresets.Children.Add(b);
-        }
-        RenderTimer();
-    }
-
-    private void TimerMode_Checked(object sender, RoutedEventArgs e)
-    {
-        if (TimerPresets == null) return; // XAML still loading
-        var kind = TimerModePomodoro.IsChecked == true ? TimerKind.Pomodoro
-                 : TimerModeStopwatch.IsChecked == true ? TimerKind.Stopwatch : TimerKind.Timer;
-        if (_timer.Kind != kind)
-        {
-            if (_focusByPomodoro) { FocusMode.End(); _focusByPomodoro = false; }
-            _timer.SetKind(kind);
-            if (kind == TimerKind.Timer && int.TryParse(TimerMinutesBox.Text, out var m) && m > 0)
-                _timer.SetDuration(TimeSpan.FromMinutes(m));
-        }
-        RenderTimer();
-    }
-
-    private void RenderTimer()
-    {
-        if (TimerPresets == null) return;
-        var kind = _timer.Kind;
-        (kind == TimerKind.Pomodoro ? TimerModePomodoro : kind == TimerKind.Stopwatch ? TimerModeStopwatch : TimerModeTimer).IsChecked = true;
-        TimerPresets.Visibility = kind == TimerKind.Timer ? Visibility.Visible : Visibility.Collapsed;
-        TimerCustomRow.Visibility = kind == TimerKind.Timer ? Visibility.Visible : Visibility.Collapsed;
-        PomodoroFocusSwitch.Visibility = kind == TimerKind.Pomodoro ? Visibility.Visible : Visibility.Collapsed;
-        UpdateTimerPage();
-        Remeasure();
-    }
-
-    private void UpdateTimerPage()
-    {
-        TimerBig.Text = _timer.Display;
-        TimerPhase.Text = _timer.Phase;
-        TimerRing.Data = _timer.Progress > 0 ? RingGeometry(132, 7, _timer.Progress) : null;
-        TimerRing.Stroke = (Brush)FindResource(_timer.Kind == TimerKind.Pomodoro && !_timer.PomodoroWork ? "AccentBlue" : "Accent");
-        TimerStartButton.Content = _timer.Running ? L.T("Пауза") : _timer.Active ? L.T("Продолжить") : L.T("Старт");
-    }
-
-    private void TimerStart_Click(object sender, RoutedEventArgs e)
-    {
-        if (_timer.Running) { _timer.Pause(); UpdateTimerPage(); return; }
-
-        if (_timer.Kind == TimerKind.Timer && !_timer.Active)
-        {
-            if (!int.TryParse(TimerMinutesBox.Text.Trim(), out var m) || m <= 0 || m > 600) m = 5;
-            _timer.SetDuration(TimeSpan.FromMinutes(m));
-        }
-        _timer.Start();
-        if (_timer.Kind == TimerKind.Pomodoro && _timer.PomodoroWork && _settings.PomodoroFocus && !FocusMode.IsOn)
-        {
-            FocusMode.Start(_timer.Remaining);
-            _focusByPomodoro = true;
-        }
-        UpdateTimerPage();
-    }
-
-    private void TimerReset_Click(object sender, RoutedEventArgs e)
-    {
-        _timer.Reset();
-        if (_focusByPomodoro) { FocusMode.End(); _focusByPomodoro = false; }
-        UpdateTimerPage();
-    }
-
-    private void TimerMinutesBox_KeyDown(object sender, KeyEventArgs e)
-    {
-        if (e.Key != Key.Enter) return;
-        TimerStart_Click(sender, e);
-        Keyboard.ClearFocus();
-    }
-
-    private void PomodoroFocus_Click(object sender, RoutedEventArgs e)
-    {
-        _settings.PomodoroFocus = PomodoroFocusSwitch.IsChecked == true;
-        _settings.Save();
-    }
-
     // ================================================================ clipboard history
 
     private sealed record ClipItem(string? Text, BitmapSource? Image, string[]? Files, DateTime At);
@@ -185,7 +83,15 @@ public partial class MainWindow
         if (item.Text != null) _clips.RemoveAll(c => c.Text == item.Text); // copying again moves it up
         _clips.Insert(0, item);
         if (_clips.Count > 30) _clips.RemoveRange(30, _clips.Count - 30);
-        if (_mode == Mode.Expanded && TabClip.IsChecked == true && ClipSegHistory.IsChecked == true) RenderClipboard();
+        if (_mode == Mode.Expanded && TabClip.IsChecked == true) RenderClipboard();
+    }
+
+    private void RenderClipSection() => RenderClipboard();
+
+    private void ClipSeg_Checked(object sender, RoutedEventArgs e)
+    {
+        if (ClipList == null) return;
+        RenderClipboard();
     }
 
     private void RenderClipboard()
@@ -235,9 +141,14 @@ public partial class MainWindow
         {
             if (c.Text != null) Clipboard.SetText(c.Text);
             else if (c.Image != null) Clipboard.SetImage(c.Image);
-            else if (c.Files != null) FileDropActions.CopyFiles(c.Files);
+            else if (c.Files != null)
+            {
+                var list = new System.Collections.Specialized.StringCollection();
+                list.AddRange(c.Files);
+                Clipboard.SetFileDropList(list);
+            }
         }
-        catch { ShowToast("", L.T("Буфер обмена занят"), null); return; }
+        catch { ShowToast("", L.T("Буфер обмена занят"), null); return; }
 
         SetMode(Mode.Compact);
         var target = _lastExternalWindow;
@@ -251,15 +162,13 @@ public partial class MainWindow
             Native.keybd_event(0x56, 0, 2, UIntPtr.Zero);
             Native.keybd_event(0x11, 0, 2, UIntPtr.Zero);
         }
-        else ShowToast("", L.T("Скопировано"), L.T("Вставьте Ctrl+V"));
+        else ShowToast("", L.T("Скопировано"), L.T("Вставьте Ctrl+V"));
     }
 
     private void ClipClear_Click(object sender, RoutedEventArgs e)
     {
-        if (ClipSegShelf.IsChecked == true) { _settings.Shelf.Clear(); _settings.Save(); }
-        else if (ClipSegText.IsChecked == true) { TextToolsBox.Clear(); QrFrame.Visibility = Visibility.Collapsed; }
-        else _clips.Clear();
-        RenderClipSection();
+        _clips.Clear();
+        RenderClipboard();
     }
 
     // ================================================================ notes
@@ -305,7 +214,7 @@ public partial class MainWindow
             var note = n;
             var buttons = new StackPanel { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Top };
             var copy = new Views.CopyButton(null) { Style = (Style)FindResource("IconButton"), Width = 28, Height = 28, FontSize = 12, ToolTip = L.T("Скопировать"), Text = () => note.Text };
-            var del = new Button { Style = (Style)FindResource("IconButton"), Content = "", Width = 28, Height = 28, FontSize = 12, ToolTip = L.T("Удалить") };
+            var del = new Button { Style = (Style)FindResource("IconButton"), Content = "", Width = 28, Height = 28, FontSize = 12, ToolTip = L.T("Удалить") };
             del.Click += (_, _) => { NotesStore.Notes.Remove(note); _openNotes.Remove(note); NotesStore.Save(); RenderNotes(); };
             buttons.Children.Add(copy);
             buttons.Children.Add(del);
@@ -326,243 +235,60 @@ public partial class MainWindow
         Remeasure();
     }
 
-    // ================================================================ calendar
+    // ================================================================ home page (Verjot)
 
-    private void RenderCalendar()
+    /// <summary>The home page's meeting card and quick note. Called when the page shows and from the tick.</summary>
+    private void InitHome() => RenderHome();
+
+    private void RenderHome()
     {
-        EventsList.Children.Clear();
-        var events = _calendar.Upcoming(7);
-        foreach (var e in events.Take(8))
+        bool recording = _meeting.IsRecording;
+        HomeMeetTime.Text = Clock(_meeting.Elapsed);
+        double level = Math.Sqrt(Math.Clamp(Math.Max(_meeting.MicLevel, _meeting.SystemLevel), 0, 1));
+        HomeMeetRing.Data = recording ? RingGeometry(64, 5, 0.04 + level * 0.96) : null;
+        HomeMeetRing.SetResourceReference(System.Windows.Shapes.Shape.StrokeProperty, recording ? "Danger" : "Accent");
+        HomeMeetTitle.Text = recording
+            ? (_meeting.MicrophoneOff ? V.T("录音中 · 麦克风已关", "Recording · microphone off") : V.T("录音中", "Recording"))
+            : V.T("会议录音", "Meeting recording");
+        HomeMeetInfo.Text = recording
+            ? V.T("结束后自动混成一条 MP3。", "One MP3 at the end.")
+            : V.T("收录麦克风和电脑声音。", "Microphone and computer sound together.");
+        HomeMeetButton.Content = recording ? V.T("结束", "End") : V.T("开始", "Start");
+        HomeMeetButton.Style = (Style)FindResource(recording ? "DangerPill" : "AccentPill");
+        HomeNoteOpen.Content = V.T("打开便签", "Open sticky note");
+        HomeNoteGo.Content = V.T("速记页", "Notes page");
+        HomeNoticesTitle.Text = V.T("刚刚的通知", "Recent notices");
+    }
+
+    private void HomeMeeting_Click(object sender, RoutedEventArgs e) => OpenTab(TabMeeting);
+
+    /// <summary>Opens the sticky note editor; for now, today's note file in the default editor.</summary>
+    internal void OpenStickyNote()
+    {
+        try
         {
-            var when = e.Start.Date == DateTime.Today ? L.T("Сегодня") : e.Start.Date == DateTime.Today.AddDays(1) ? L.T("Завтра") : e.Start.ToString("ddd d MMM");
-            var row = new Grid { Margin = new Thickness(0, 3, 0, 3) };
-            row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(110) });
-            row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
-            row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            row.Children.Add(new TextBlock { Text = e.AllDay ? when : $"{when} {e.Start:HH:mm}", Style = (Style)FindResource("Muted"), VerticalAlignment = VerticalAlignment.Center });
-            var title = new TextBlock { Text = (e.IsReminder ? "🔔 " : "") + e.Title, FontSize = 13, TextTrimming = TextTrimming.CharacterEllipsis, VerticalAlignment = VerticalAlignment.Center };
-            Grid.SetColumn(title, 1);
-            row.Children.Add(title);
-            if (e.IsReminder)
-            {
-                var del = new Button { Style = (Style)FindResource("IconButton"), Content = "", Width = 26, Height = 26, FontSize = 11 };
-                var ev = e;
-                del.Click += (_, _) =>
-                {
-                    _settings.Reminders.RemoveAll(r => r.Title == ev.Title && r.When == ev.Start);
-                    _settings.Save();
-                    RenderCalendar();
-                };
-                Grid.SetColumn(del, 2);
-                row.Children.Add(del);
-            }
-            EventsList.Children.Add(row);
+            string file = VerjotFiles.TodayFile;
+            if (!File.Exists(file)) { Directory.CreateDirectory(Path.GetDirectoryName(file)!); File.WriteAllText(file, ""); }
+            Process.Start(new ProcessStartInfo(file) { UseShellExecute = true });
         }
-        if (events.Count == 0)
-            EventsList.Children.Add(new TextBlock { Text = L.T("На неделю ничего не запланировано"), Style = (Style)FindResource("Muted") });
-        IcsStatus.Text = _calendar.Error != null
-            ? L.T("Не удалось загрузить календарь: ") + _calendar.Error
-            : _settings.CalendarIcs.Length > 0 ? L.T("Календарь подключён, обновляется каждые 15 минут.")
-            : L.T("Google Календарь → Настройки календаря → «Секретный адрес в формате iCal».");
-        Remeasure();
+        catch (Exception ex) { Log.Write("notes: open: " + ex.GetType().Name + ": " + ex.Message); }
     }
 
-    private void ReminderAdd_Click(object sender, RoutedEventArgs e)
+    /// <summary>Enter on the home box saves the note, like on the notes page.</summary>
+    private void HomeNoteBox_KeyDown(object sender, KeyEventArgs e)
     {
-        var title = ReminderTitleBox.Text.Trim();
-        var when = CalendarService.ParseWhen(ReminderWhenBox.Text);
-        if (title.Length == 0 || when == null)
-        {
-            ReminderHint.Text = title.Length == 0 ? L.T("Напишите, о чём напомнить") : L.T("Не понял время. Примеры: 18:30, завтра 9:00, через 20 мин, 15.11 14:00");
-            ReminderHint.SetResourceReference(TextBlock.ForegroundProperty, "Danger");
-            return;
-        }
-        _settings.Reminders.Add(new Reminder { Title = title, When = when.Value });
-        _settings.Save();
-        ReminderTitleBox.Clear();
-        ReminderWhenBox.Clear();
-        ReminderHint.Text = L.T("Напомню ") + when.Value.ToString(L.T("dd.MM в HH:mm"));
-        ReminderHint.SetResourceReference(TextBlock.ForegroundProperty, "Fg2");
-        Keyboard.ClearFocus();
-        RenderCalendar();
-    }
-
-    private void Reminder_KeyDown(object sender, KeyEventArgs e)
-    {
-        if (e.Key == Key.Enter) ReminderAdd_Click(sender, e);
-    }
-
-    private async void IcsApply_Click(object sender, RoutedEventArgs e)
-    {
-        _settings.CalendarIcs = IcsBox.Text.Trim();
-        _settings.Save();
-        IcsStatus.Text = L.T("Загружаю…");
-        await _calendar.RefreshAsync(force: true);
-        RenderCalendar();
-    }
-
-    // ================================================================ drop files on the island
-
-    private string[] _dropped = [];
-
-    private void Island_DragEnter(object sender, DragEventArgs e)
-    {
-        if (_draggingOut || !e.Data.GetDataPresent(DataFormats.FileDrop) || _mode == Mode.Claude) { e.Effects = DragDropEffects.None; e.Handled = true; return; }
-        e.Effects = DragDropEffects.Copy;
+        if (e.Key != Key.Enter) return;
+        if (Keyboard.Modifiers.HasFlag(ModifierKeys.Shift)) return;
+        var text = HomeNoteBox.Text.Trim();
         e.Handled = true;
-        if (_mode == Mode.Expanded && HomeApps.IsVisible) { e.Effects = DragDropEffects.Link; return; }   // pin to the apps row
-        if (_mode == Mode.Drop && DropActions.Visibility == Visibility.Visible) return;
-        ShowDropTarget();
+        if (text.Length == 0) return;
+        NotesStore.Notes.Insert(0, new Note { Text = text });
+        NotesStore.Save();
+        HomeNoteBox.Clear();
+        ShowToast("\uE70B", V.T("已记下", "Kept"), V.T("今天的速记里", "in today's notes"), ms: 2200);
     }
 
-    /// <summary>A file is being dragged over the island: "drop it here".</summary>
-    private void ShowDropTarget()
-    {
-        _dropped = [];
-        DropCoreView.Reset();
-        DropCoreView.Glyph = "\uE898";   // an arrow up: "in here"
-        DropCoreView.Near(true);
-        DropTitle.Text = L.T("Отпустите файл на острове");
-        DropSubtitle.Text = L.T("Поделиться, ZIP, конвертировать или сжать картинку");
-        DropActions.Visibility = Visibility.Collapsed;
-        if (_hidden) ShowIsland();
-        SetMode(Mode.Drop);
-        Kick(2);
-    }
+    private void HomeNoteOpen_Click(object sender, RoutedEventArgs e) => OpenStickyNote();
 
-    private void Island_DragLeave(object sender, DragEventArgs e)
-    {
-        var p = e.GetPosition(Island);
-        bool outside = p.X < 0 || p.Y < 0 || p.X > Island.ActualWidth || p.Y > Island.ActualHeight;
-        if (outside) DropCoreView.Near(false);
-        if (outside && _dropped.Length == 0 && _mode == Mode.Drop) SetMode(Mode.Compact);
-    }
-
-    private void Island_Drop(object sender, DragEventArgs e)
-    {
-        if (e.Data.GetData(DataFormats.FileDrop) is not string[] files || files.Length == 0) return;
-        e.Handled = true;
-        if (_mode == Mode.Expanded && HomeApps.IsVisible)
-        {
-            if (OverApps(e)) { AddApps(files); return; }
-            SetMode(Mode.Drop);   // dropped elsewhere on Home: the usual file actions
-        }
-        ShowDropped(files);
-    }
-
-    private void ShowDropped(string[] files)
-    {
-        _dropped = files;
-
-        long size = files.Where(File.Exists).Sum(f => new FileInfo(f).Length);
-        bool images = files.All(f => File.Exists(f) && FileDropActions.IsImage(f));
-        DropCoreView.Glyph = images ? "" : files.Any(Directory.Exists) ? "" : "";
-        DropCoreView.Gulp();
-        DropTitle.Text = files.Length == 1 ? Path.GetFileName(files[0].TrimEnd('\\')) : L.F("{0} файла(ов)", files.Length);
-        DropSubtitle.Text = size > 0 ? DownloadWatcher.FormatBytes(size) : L.T("папка");
-
-        DropActions.Children.Clear();
-        AddDropAction("\uE7B8", L.T("На полку"), () => { AddToShelf(files); Done(L.T("На полке"), L.F("{0} файл(ов) ждут во вкладке «Буфер → Полка»", _settings.Shelf.Count)); });
-        AddDropAction("", L.T("Поделиться"), () => FileDropActions.Share(_hwnd, files), keepOpen: true);
-        AddDropAction("", L.T("Копировать для вставки"), () => { FileDropActions.CopyFiles(files); Done(L.T("Файлы в буфере"), L.T("Вставьте в Telegram, чат или папку: Ctrl+V")); });
-        AddDropAction("", L.T("В ZIP"), () => _ = WorkOnDrop(files, L.T("Сжимаю в ZIP"), L.T("Архив готов"), p => FileDropActions.Zip(files, p)));
-        if (images)
-        {
-            AddDropAction("", L.T("В JPG"), () => _ = WorkOnDrop(files, L.T("Перевожу в JPG"), L.T("Готово"), p => EachImage(files, p, f => FileDropActions.ConvertImage(f, "jpg"))));
-            AddDropAction("", L.T("В PNG"), () => _ = WorkOnDrop(files, L.T("Перевожу в PNG"), L.T("Готово"), p => EachImage(files, p, f => FileDropActions.ConvertImage(f, "png"))));
-            AddDropAction("", L.T("Сжать фото"), () => _ = WorkOnDrop(files, L.T("Сжимаю фото"), L.T("Фото сжато"), p => EachImage(files, p, f => FileDropActions.ConvertImage(f, "jpg", 72, 1920))));
-        }
-        AddDropAction("", L.T("Копировать путь"), () => { Clipboard.SetText(string.Join(Environment.NewLine, files)); Done(L.T("Путь скопирован"), null); });
-        AddDropAction("", L.T("Закрыть"), () => { _dropped = []; SetMode(Mode.Compact); }, keepOpen: true);
-
-        DropActions.Visibility = Visibility.Visible;
-        MorphTo(TargetSize(Mode.Drop));
-        Kick(3);
-    }
-
-    private void AddDropAction(string glyph, string label, Action run, bool keepOpen = false)
-    {
-        var content = new StackPanel { Orientation = Orientation.Horizontal };
-        content.Children.Add(new TextBlock { Text = glyph, FontFamily = (FontFamily)FindResource("IconFont"), VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 7, 0) });
-        content.Children.Add(new TextBlock { Text = label });
-        var b = new Button { Style = (Style)FindResource("Pill"), Content = content, Margin = new Thickness(0, 0, 6, 6) };
-        b.Click += async (_, _) =>
-        {
-            try
-            {
-                Mouse.OverrideCursor = Cursors.Wait;
-                await Dispatcher.InvokeAsync(run, System.Windows.Threading.DispatcherPriority.Background);
-            }
-            catch (Exception ex)
-            {
-                Log.Write("drop action: " + ex);
-                ShowToast("", L.T("Не получилось"), ex.Message);
-            }
-            finally { Mouse.OverrideCursor = null; }
-        };
-        DropActions.Children.Add(b);
-    }
-
-    /// <summary>The zone is at work (ZIP, converting): the island stays open until it is done.</summary>
-    private bool _dropWorking;
-
-    /// <summary>
-    /// A slow action on the dropped files (File drop): on a background thread, its progress on the circle's ring
-    /// and in the line under the name ("12 MB of 40 MB"); at the end the circle goes green and the lines roll over
-    /// to the result, and a moment later the usual notice with the file to open.
-    /// </summary>
-    private async Task WorkOnDrop(string[] files, string working, string doneTitle, Func<IProgress<double>, string> work)
-    {
-        if (_dropWorking) return;
-        _dropWorking = true;
-        DropActions.Visibility = Visibility.Collapsed;
-        MorphTo(TargetSize(Mode.Drop));
-        long total = await Task.Run(() => FileDropActions.SizeOf(files));
-        DropTitle.Text = working;
-        DropSubtitle.Text = L.F("{0} из {1}", DownloadWatcher.FormatBytes(0), DownloadWatcher.FormatBytes(total));
-        DropCoreView.Begin();
-        var progress = new Progress<double>(p =>
-        {
-            DropCoreView.SetProgress(p);
-            DropSubtitle.Text = L.F("{0} из {1}", DownloadWatcher.FormatBytes(p * total), DownloadWatcher.FormatBytes(total));
-        });
-        string result;
-        try { result = await Task.Run(() => work(progress)); }
-        catch (Exception ex)
-        {
-            Log.Write("drop action: " + ex);
-            _dropWorking = false;
-            DropCoreView.Reset();
-            _dropped = [];
-            ShowToast("\uE783", L.T("Не получилось"), ex.Message);
-            return;
-        }
-        var full = new TaskCompletionSource();
-        DropCoreView.Finish(() =>
-        {
-            DropTitle.Text = doneTitle;
-            DropSubtitle.Text = Path.GetFileName(result) + " · " + DownloadWatcher.FormatBytes(File.Exists(result) ? new FileInfo(result).Length : 0);
-            full.TrySetResult();
-        });
-        await full.Task;
-        await Task.Delay(1400);   // the green and the check, then the notice with the file
-        _dropWorking = false;
-        Done(doneTitle, null, result);
-    }
-
-    /// <summary>Runs one job per image, reporting how many are done; the last result is the one to show.</summary>
-    private static string EachImage(string[] files, IProgress<double> progress, Func<string, string> job)
-    {
-        string last = "";
-        for (int i = 0; i < files.Length; i++) { last = job(files[i]); progress.Report((i + 1.0) / files.Length); }
-        return last;
-    }
-
-    private void Done(string title, string? text, string? file = null)
-    {
-        _dropped = [];
-        Action? open = file == null ? null
-            : () => Process.Start(new ProcessStartInfo("explorer.exe", $"/select,\"{file}\"") { UseShellExecute = true });
-        ShowToast("", title, text ?? (file != null ? Path.GetFileName(file) : null), open, (Brush)FindResource("Accent"), ms: 4000);
-    }
+    private void HomeNoteGo_Click(object sender, RoutedEventArgs e) => OpenTab(TabNotes);
 }

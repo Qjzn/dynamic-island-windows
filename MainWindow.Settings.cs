@@ -51,28 +51,6 @@ public partial class MainWindow
         catch (Exception ex) { ShowToast("", L.T("Не получилось"), ex.Message); }
     }
 
-    /// <summary>Quick uninstall from the settings: the installer's uninstaller, or a clean self-removal for a portable copy.</summary>
-    private void Uninstall_Click(object sender, RoutedEventArgs e)
-    {
-        if (MessageBox.Show(this, L.T("Удалить Atoll с этого компьютера?"), "Atoll",
-                MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) != MessageBoxResult.Yes) return;
-
-        var uninstaller = Services.Uninstaller.InstalledUninstaller;
-        if (uninstaller != null)
-        {
-            // installed with the setup: its uninstaller removes everything and asks about personal data
-            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(uninstaller) { UseShellExecute = true });
-            Close();
-            return;
-        }
-
-        bool data = MessageBox.Show(this, L.T("Удалить также настройки, заметки и вход в чаты?"), "Atoll",
-            MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) == MessageBoxResult.Yes;
-        Services.Uninstaller.RemoveRegistrations();
-        Services.Uninstaller.ScheduleDelete(data, appFolder: true);
-        Close();
-    }
-
     private void InitSettingsPage()
     {
         BuildLanguageList();
@@ -120,7 +98,7 @@ public partial class MainWindow
                 _settings.Save();
                 Character.Kind = id;
                 preview.Cheer();
-                SetupAura(); // Claude Code lights the island orange
+                SetupAura();
                 HighlightCharacter();
             };
             CharacterGallery.Children.Add(card);
@@ -164,9 +142,8 @@ public partial class MainWindow
         _settingsLoading = true;
         DarkSwitch.IsChecked = _settings.DarkTheme;
         LiquidSwitch.IsChecked = _settings.LiquidWaves;
-        // the scrubbers say what they set and show the value inside
-        ScaleSlider.Label = L.T("Размер острова"); LiquidSlider.Label = L.T("Сила волн"); VoiceVolumeSlider.Label = L.T("Громкость ИИ-ассистента");
-        ScaleSlider.Format = LiquidSlider.Format = VoiceVolumeSlider.Format = v => $"{v:0}%";
+        ScaleSlider.Label = L.T("Размер острова"); LiquidSlider.Label = L.T("Сила волн");
+        ScaleSlider.Format = LiquidSlider.Format = v => $"{v:0}%";
         LiquidSlider.Value = Math.Clamp(_settings.LiquidStrength, 10, 100);
         LiquidSlider.Visibility = _settings.LiquidWaves ? Visibility.Visible : Visibility.Collapsed;
         RefreshLookControls();
@@ -174,11 +151,7 @@ public partial class MainWindow
         MusicWavesSwitch.IsChecked = _settings.MusicWaves;
 
         ClaudeGlowSwitch.IsChecked = _settings.ClaudeGlow;
-        CleanDesktopSwitch.IsChecked = _settings.CleanDesktop;
         HandDrawnSwitch.IsChecked = _settings.HandDrawn;
-        GameStatsSwitch.IsChecked = _settings.GameStats;
-        GameOnlyListedSwitch.IsChecked = _settings.GameStatsOnlyListed;
-        RefreshGameAppsBlock();
         LockSwitch.IsChecked = _settings.LockPosition;
         SmartSwitch.IsChecked = _settings.SmartIsland;
         FillHideAppPicker();
@@ -188,17 +161,7 @@ public partial class MainWindow
         ProgressSwitch.IsChecked = _settings.ShowProgress;
         MonitorSwitch.IsChecked = _settings.FollowMonitor;
         BuildThemeEditor();
-        if (CheckHost.IsVisible) _ = RunSelfCheckAsync();
-        DiscordSideSwitch.IsChecked = _settings.DiscordSidePill;
-        DiscordShowSwitch.IsChecked = _settings.ShowDiscordCall;
-        // only when it differs: setting it again on every refresh used to wipe a key that was being typed in
-        if (GeminiVoiceApiKeyBox.Password != _settings.GeminiVoiceApiKey && !GeminiVoiceApiKeyBox.IsKeyboardFocusWithin)
-            GeminiVoiceApiKeyBox.Password = _settings.GeminiVoiceApiKey;
-        VoiceVolumeSlider.Value = Math.Clamp(_settings.GeminiVoiceVolume, 0, 100);
-        DiscordSideSwitch.IsEnabled = _settings.ShowDiscordCall;
         CaptureSwitch.IsChecked = HideFromCapture;
-        ShotModeBox.SelectedIndex = _settings.ScreenshotQuick ? 1 : 0;
-        ShotRevealSwitch.IsChecked = _settings.ScreenshotReveal;
         ScaleSlider.Value = Math.Clamp(_settings.IslandScale, 80, 130);
         LiteSwitch.IsChecked = Lite;
         if (OpenHotkeyBox.Items.Count == 0)
@@ -208,36 +171,15 @@ public partial class MainWindow
         }
         OpenHotkeyBox.SelectedIndex = Math.Max(0, Array.FindIndex(OpenHotkeys, h => h.Name == _settings.OpenHotkey) is int i && i >= 0 ? i : OpenHotkeys.Length);
         OpenHotkeyStatus.Text = L.T("Ещё раз — свернуть. Esc или клик мимо — тоже.");
-        if (CommandHotkeyBox.Items.Count == 0)
-        {
-            foreach (var h in CommandHotkeys) CommandHotkeyBox.Items.Add(h.Name);
-            CommandHotkeyBox.Items.Add(L.T("Выключено"));
-        }
-        CommandHotkeyBox.SelectedIndex = Array.FindIndex(CommandHotkeys, h => h.Name == _settings.CommandHotkey) is int ci && ci >= 0 ? ci : CommandHotkeys.Length;
-        CommandHotkeyStatus.Text = CommandHotkeyHint();
         DonateButton.Visibility = DonateUrl.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
-        RefreshFpsAccess();
-        KaraokeSwitch.IsChecked = _settings.Karaoke;
         NotifySwitch.IsChecked = _settings.MirrorNotifications;
         RefreshNotifyHint();
-        NotifyAllSwitch.IsChecked = _settings.MirrorAllApps;
         ColorBox.Text = _settings.IslandColor;
-        HomeActionsChip.IsChecked = _settings.HomeActions;
-        HomeMusicChip.IsChecked = _settings.HomeMusic;
-        HomeWeatherChip.IsChecked = _settings.HomeWeather;
-        HomeAppsChip.IsChecked = _settings.HomeApps;
         HoverSwitch.IsChecked = _settings.ExpandOnHover;
         YieldSwitch.IsChecked = _settings.YieldToCursor;
         PlacePerAppSwitch.IsChecked = _settings.PlacePerApp;
         FullscreenSwitch.IsChecked = _settings.HideInFullscreen;
         AutostartSwitch.IsChecked = Autostart.IsEnabled;
-        if (AppPackage.IsPackaged) UninstallButton.Visibility = Visibility.Collapsed;   // Store apps are removed in Windows Settings
-        CommandBox.Text = _settings.Command;
-        TranslateBox.Text = _settings.TranslateTo;
-        RecSysSwitch.IsChecked = _settings.RecordSystemAudio;
-        RecMicSwitch.IsChecked = _settings.RecordMicrophone;
-        RefreshClaudeHooksUi();
-        RefreshCodexHooksUi();
         _settingsLoading = false;
     }
 
@@ -262,8 +204,6 @@ public partial class MainWindow
         Kick(4);
     }
 
-
-
     private void Liquid_Click(object sender, RoutedEventArgs e)
     {
         _settings.LiquidWaves = LiquidSwitch.IsChecked == true;
@@ -281,7 +221,6 @@ public partial class MainWindow
         }
     }
 
-
     private void ColorApply_Click(object sender, RoutedEventArgs e) => SetIslandColor(NormalizeHex(ColorBox.Text));
 
     private void ColorBox_KeyDown(object sender, KeyEventArgs e)
@@ -295,21 +234,8 @@ public partial class MainWindow
         return s.StartsWith('#') ? s : "#" + s;
     }
 
-    private void HomeLayout_Click(object sender, RoutedEventArgs e)
-    {
-        _settings.HomeActions = HomeActionsChip.IsChecked == true;
-        _settings.HomeMusic = HomeMusicChip.IsChecked == true;
-        _settings.HomeWeather = HomeWeatherChip.IsChecked == true;
-        _settings.HomeApps = HomeAppsChip.IsChecked == true;
-        _settings.Save();
-        BuildHome();
-    }
-
     private void Behavior_Click(object sender, RoutedEventArgs e)
     {
-        // "hide in fullscreen" and "FPS in games" exclude each other: turning one on turns the other off
-        if (sender == FullscreenSwitch && FullscreenSwitch.IsChecked == true) GameStatsSwitch.IsChecked = false;
-        if (sender == GameStatsSwitch && GameStatsSwitch.IsChecked == true) FullscreenSwitch.IsChecked = false;
         _settings.ExpandOnHover = HoverSwitch.IsChecked == true;
         _settings.YieldToCursor = YieldSwitch.IsChecked == true;
         if (_settings.PlacePerApp != (PlacePerAppSwitch.IsChecked == true))
@@ -318,10 +244,6 @@ public partial class MainWindow
             if (!_settings.PlacePerApp && _placeOwner != null) { _placeOwner = null; FloatToPlace(); }   // off: back to the usual place
         }
         _settings.HideInFullscreen = FullscreenSwitch.IsChecked == true;
-        _settings.GameStats = GameStatsSwitch.IsChecked == true;
-        _settings.GameStatsOnlyListed = GameOnlyListedSwitch.IsChecked == true;
-        RefreshGameAppsBlock();
-        Remeasure();
         _settings.LockPosition = LockSwitch.IsChecked == true;
         _settings.SmartIsland = SmartSwitch.IsChecked == true;
         _settings.ShowCapsLock = CapsSwitch.IsChecked == true;
@@ -329,9 +251,6 @@ public partial class MainWindow
         _settings.ShowLevels = LevelsSwitch.IsChecked == true;
         _settings.ShowProgress = ProgressSwitch.IsChecked == true;
         _settings.FollowMonitor = MonitorSwitch.IsChecked == true;
-        _settings.DiscordSidePill = DiscordSideSwitch.IsChecked == true;
-        _settings.ShowDiscordCall = DiscordShowSwitch.IsChecked == true;
-        DiscordSideSwitch.IsEnabled = _settings.ShowDiscordCall;
         if (HideFromCapture != (CaptureSwitch.IsChecked == true))
         {
             _settings.CaptureHidden = CaptureSwitch.IsChecked == true;
@@ -339,43 +258,31 @@ public partial class MainWindow
             CaptureFrost();
             UpdateGlassFill();
         }
-        _settings.ScreenshotReveal = ShotRevealSwitch.IsChecked == true;
-        _settings.Karaoke = KaraokeSwitch.IsChecked == true;
         _settings.MirrorNotifications = NotifySwitch.IsChecked == true;
         RefreshNotifyHint();
-        _settings.MirrorAllApps = NotifyAllSwitch.IsChecked == true;
         _settings.Save();
     }
 
-    private void RefreshGameAppsBlock()
-    {
-        GameAppsBlock.Visibility = _settings.GameStats ? Visibility.Visible : Visibility.Collapsed;
-        GameAppsList.Visibility = _settings.GameStatsOnlyListed ? Visibility.Visible : Visibility.Collapsed;
-    }
-
-    /// <summary>Why messages may not show up: the notification center is off, or no access.</summary>
+    /// <summary>Why the notification text may not show up: the centre is off, or no access.</summary>
     private void RefreshNotifyHint()
     {
         string? hint = null;
         if (_settings.MirrorNotifications)
         {
-            if (NotificationMirror.CenterDisabled())
-                hint = L.T("Центр уведомлений Windows отключён (обычно это делают программы-«твикеры»), поэтому Windows не хранит уведомления и Atoll не видит их текст. Остров всё равно скажет «новое сообщение» — по счётчику непрочитанных в окне мессенджера. Чтобы видеть и текст, включите центр уведомлений обратно в той же программе.");
-            else if (!_notifications.Available)
-                hint = L.T("Windows не дал доступ к уведомлениям, поэтому остров показывает только «новое сообщение» без текста. Чтобы видеть текст: «Параметры → Конфиденциальность → Уведомления» — разрешите приложениям доступ.");
-            else
-                hint = L.T("В Telegram Desktop включите «Настройки → Уведомления → Системные уведомления», иначе Telegram показывает свои окна, которые Windows не видит.");
+            if (ToastReader.CenterDisabled())
+                hint = V.T("Windows 的通知中心被关闭了（常是“优化”软件设置的），所以读不到系统通知的文字。微信和企业微信本来就不发系统通知，岛上只提示“有新消息”。",
+                    "The Windows notification centre is switched off (often by \"tweak\" tools), so system toasts cannot be read. WeChat and WeCom send no toasts anyway — the island only says \"new message\".");
+            else if (!_toasts.Available)
+                hint = V.T("还没有通知访问权限，只能看到“有新消息”。到「设置 → 通知」里点上面的提示去允许。",
+                    "No access to notifications yet — only \"new message\" is shown. Allow it in the Windows settings (see the notice above).");
         }
         NotifyHint.Text = hint ?? "";
         NotifyHint.Visibility = hint == null ? Visibility.Collapsed : Visibility.Visible;
     }
 
-    /// <summary>The Atoll channel on Telegram.</summary>
-    private const string TelegramUrl = "https://t.me/atollisland";
     /// <summary>Where donations go; the button stays hidden while this is empty.</summary>
     private const string DonateUrl = "";
 
-    private void Telegram_Click(object sender, RoutedEventArgs e) => SafeShell.OpenUrl(TelegramUrl);
     private void Donate_Click(object sender, RoutedEventArgs e) { if (DonateUrl.Length > 0) SafeShell.OpenUrl(DonateUrl); }
 
     private void OpenHotkey_Changed(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
@@ -383,15 +290,6 @@ public partial class MainWindow
         if (_settingsLoading || OpenHotkeyBox.SelectedIndex < 0) return;
         int i = OpenHotkeyBox.SelectedIndex;
         var chosen = i < OpenHotkeys.Length ? OpenHotkeys[i].Name : "";
-        // Ctrl+Shift+Space is offered for both: one shortcut can do only one of them
-        if (chosen.Length > 0 && chosen == _settings.CommandHotkey)
-        {
-            _settingsLoading = true;
-            OpenHotkeyBox.SelectedIndex = Array.FindIndex(OpenHotkeys, h => h.Name == _settings.OpenHotkey) is int was && was >= 0 ? was : OpenHotkeys.Length;
-            _settingsLoading = false;
-            OpenHotkeyStatus.Text = L.T("Это сочетание уже открывает командную строку — выберите другое.");
-            return;
-        }
         _settings.OpenHotkey = chosen;
         _settings.Save();
         OpenHotkeyStatus.Text = RegisterOpenHotkey()
@@ -399,41 +297,7 @@ public partial class MainWindow
             : L.T("Это сочетание уже занято другой программой — выберите другое.");
     }
 
-    private string CommandHotkeyHint() => _settings.CommandHotkey != "Alt+Space" ? ""
-        : _commandKeyBackupOnly ? L.T("Alt+Space занят другой программой — работает Ctrl+Alt+Space.")
-        : L.T("Если Alt+Space занят другой программой, работает Ctrl+Alt+Space.");
-
-
-    private void ShotMode_Changed(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
-    {
-        if (_settingsLoading || ShotModeBox.SelectedIndex < 0) return;
-        _settings.ScreenshotQuick = ShotModeBox.SelectedIndex == 1;
-        _settings.Save();
-    }
-
-    private void CommandHotkey_Changed(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
-
-    {
-        if (_settingsLoading || CommandHotkeyBox.SelectedIndex < 0) return;
-        int i = CommandHotkeyBox.SelectedIndex;
-        var chosen = i < CommandHotkeys.Length ? CommandHotkeys[i].Name : "";
-        if (chosen.Length > 0 && chosen == _settings.OpenHotkey)
-        {
-            _settingsLoading = true;
-            CommandHotkeyBox.SelectedIndex = Array.FindIndex(CommandHotkeys, h => h.Name == _settings.CommandHotkey) is int was && was >= 0 ? was : CommandHotkeys.Length;
-            _settingsLoading = false;
-            CommandHotkeyStatus.Text = L.T("Это сочетание уже открывает остров — выберите другое.");
-            return;
-        }
-        _settings.CommandHotkey = chosen;
-        _settings.Save();
-        CommandHotkeyStatus.Text = RegisterCommandHotkey()
-            ? CommandHotkeyHint()
-            : L.T("Это сочетание уже занято другой программой — выберите другое.");
-    }
-
     private void LiquidSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-
     {
         if (_settingsLoading || !IsLoaded) return;
         _settings.LiquidStrength = (int)Math.Round(LiquidSlider.Value);
@@ -462,38 +326,7 @@ public partial class MainWindow
     private void Autostart_Click(object sender, RoutedEventArgs e)
     {
         try { Autostart.Set(AutostartSwitch.IsChecked == true); }
-        catch (Exception ex) { ShowToast("", L.T("Автозапуск не изменён"), ex.Message); }
+        catch (Exception ex) { ShowToast("", L.T("Автозапуск не изменён"), ex.Message); }
         AutostartSwitch.IsChecked = Autostart.IsEnabled;
-    }
-
-    private void CommandBox_LostFocus(object sender, RoutedEventArgs e)
-    {
-        _settings.Command = CommandBox.Text.Trim();
-        _settings.Save();
-    }
-
-    private void TranslateBox_LostFocus(object sender, RoutedEventArgs e)
-    {
-        var lang = TranslateBox.Text.Trim().ToLowerInvariant();
-        _settings.TranslateTo = lang.Length is >= 2 and <= 5 ? lang : "";
-        TranslateBox.Text = _settings.TranslateTo;
-        _settings.Save();
-    }
-
-    private void RecordAudio_Click(object sender, RoutedEventArgs e)
-    {
-        _settings.RecordSystemAudio = RecSysSwitch.IsChecked == true;
-        _settings.RecordMicrophone = RecMicSwitch.IsChecked == true;
-        _settings.Save();
-    }
-
-    /// <summary>The key is kept the moment it is pasted (spaces and quotes around it are dropped).</summary>
-    private void GeminiVoiceApiKeyBox_Changed(object sender, RoutedEventArgs e)
-    {
-        if (_settingsLoading) return;
-        var key = GeminiVoiceApiKeyBox.Password.Trim().Trim('"', '\'').Trim();
-        if (key == _settings.GeminiVoiceApiKey) return;
-        _settings.GeminiVoiceApiKey = key;
-        _settings.Save();
     }
 }

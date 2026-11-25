@@ -62,7 +62,7 @@ public partial class MainWindow
     /// <summary>Was the click on a character? Then it reacts instead of the island.</summary>
     private bool TryEmote(MouseButtonEventArgs e)
     {
-        foreach (var ch in new[] { Character, MenuBuddy, ChatBuddy })
+        foreach (var ch in new[] { Character, MenuBuddy })
         {
             if (!ch.IsVisible || ch.Kind == "none") continue;
             var p = e.GetPosition(ch);

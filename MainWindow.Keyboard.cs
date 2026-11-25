@@ -20,7 +20,6 @@ public partial class MainWindow
     /// <summary>~4 times a second (from OnTick).</summary>
     private void WatchKeyboard()
     {
-        if (_demoMedia != null) return;
         bool caps = (GetKeyState(0x14) & 1) != 0;
         if (_capsWas != null && caps != _capsWas && _settings.ShowCapsLock)
             ShowKeyPill("", caps ? L.T("Caps Lock включён") : L.T("Caps Lock выключен"), null,
@@ -119,8 +118,8 @@ public partial class MainWindow
         var islandTl = Island.TranslatePoint(new Point(0, 0), Root);
         double iw = Island.ActualWidth * UiScale, ih = Island.ActualHeight * UiScale;
         double x, y;
-        bool side = _mode != Mode.Expanded && islandTl.X + iw + 12 + SideTaken + size.Width <= Root.ActualWidth;
-        if (side) { x = islandTl.X + iw + 10 + SideTaken; y = islandTl.Y + Math.Max(0, (Math.Min(ih, 44) - size.Height) / 2); }
+        bool side = _mode != Mode.Expanded && islandTl.X + iw + 12 + size.Width <= Root.ActualWidth;
+        if (side) { x = islandTl.X + iw + 10; y = islandTl.Y + Math.Max(0, (Math.Min(ih, 44) - size.Height) / 2); }
         else { x = islandTl.X + (iw - size.Width) / 2; y = islandTl.Y + ih + 10; }
         if (y + size.Height > Root.ActualHeight) GrowWindow(y + size.Height + 4);
         Canvas.SetLeft(_keyPill, Math.Max(0, x));

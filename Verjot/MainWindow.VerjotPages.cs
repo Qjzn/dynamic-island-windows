@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Windows;
 using DynamicIsland.Services;
 
@@ -10,6 +11,8 @@ namespace DynamicIsland;
 /// </summary>
 public partial class MainWindow
 {
+    /// <summary>A test run (<c>--run …</c>): it must not touch the user's state.</summary>
+    internal static bool IsToolRun => Environment.GetCommandLineArgs().Any(a => a is "--run" or "--safe");
     private void InitVerjotPages()
     {
         // Until the user arranges the tabs (both lists are still empty): Verjot's pages are the ones on the island.

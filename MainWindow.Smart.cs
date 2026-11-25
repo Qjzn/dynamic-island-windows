@@ -37,10 +37,7 @@ public partial class MainWindow
         void Add(RadioButton t, double s) => score[t] = score.GetValueOrDefault(t) + s;
 
         // what's going on right now
-        if (_timer.Active) Add(TabTimer, _timer.Running ? 3.2 : 2.2);
-        if (_discordInCall) Add(TabSystem, 2.4);
         if ((DateTime.Now - _copiedAt).TotalSeconds < 25) Add(TabClip, 2.6);
-        if (_lastMedia?.IsPlaying == true) Add(TabMusic, 1.4);
 
         // habits: the tabs opened most at this hour (and the hours around it)
         int h = DateTime.Now.Hour;
@@ -69,7 +66,6 @@ public partial class MainWindow
     /// <summary>Every second (from SlowTick): time spent on each tab while open; when it folds, remember the main one.</summary>
     private void TrackHabits()
     {
-        if (_mode == Mode.Expanded && !_liveDemo && _demoMedia == null)
         {
             var tab = PageTabs.FirstOrDefault(t => t.IsChecked == true);
             if (tab != null) _openSecs[tab.Name] = _openSecs.GetValueOrDefault(tab.Name) + 1;
@@ -141,11 +137,9 @@ public partial class MainWindow
     private void WatchBattery()
     {
         bool saver = false;
-        if (Smart && ControlCenter.Battery() is { } b) saver = !b.Charging && b.Percent <= 20;
         if (saver == _batterySaver) return;
         _batterySaver = saver;
         Log.Write("battery saver " + (saver ? "on: light graphics" : "off"));
-        ApplyGlass(); UpdateAuraVisibility(); ApplyScene();
         if (saver) ShowToast("", L.T("Мало заряда — облегчённая графика"), L.T("Эффекты вернутся, когда подключите зарядку"));
     }
 }

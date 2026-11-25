@@ -1,4 +1,4 @@
-﻿using System.Windows;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -308,7 +308,7 @@ public partial class MainWindow
                     var t = MagCapture.CaptureAsync(_hwnd, rect, w, h, f.Px);
                     px = t.Wait(1000) ? t.Result : null;
                 }
-                else px = CaptureService.CaptureSmall(rect, w, h, f.Px);
+                else px = ScreenGrab.CaptureSmall(rect, w, h, f.Px);
                 Interlocked.Add(ref _frostGrabTicks, System.Diagnostics.Stopwatch.GetTimestamp() - t0);
                 Interlocked.Increment(ref _frostGrabCount);
                 if (px == null || _shutDown) continue;
@@ -397,7 +397,7 @@ public partial class MainWindow
             int w = Math.Max(1, rect.Width / div), h = Math.Max(1, rect.Height / div);
             if (_frostTestBackdrop != null || _demoPlate != null)
             {
-                var still = _frostTestBackdrop != null ? _frostTestBackdrop(w, h) : CaptureService.CropSmall(_demoPlate!, _demoPlateAt, rect, w, h, _frostPixels);
+                var still = _frostTestBackdrop != null ? _frostTestBackdrop(w, h) : ScreenGrab.CropSmall(_demoPlate!, _demoPlateAt, rect, w, h, _frostPixels);
                 if (still == null) return false;
                 if (_frostTestBackdrop == null) _frostPixels = still;
                 return ShowFrost(still, w, h, half, height, islandW, islandH, top, 0);
@@ -407,7 +407,7 @@ public partial class MainWindow
             var buffer = _frostPixels;
             long g0 = System.Diagnostics.Stopwatch.GetTimestamp();
             Task<byte[]?> grab = (_excluded == true
-                ? Task.Run(() => CaptureService.CaptureSmall(rect, w, h, buffer))
+                ? Task.Run(() => ScreenGrab.CaptureSmall(rect, w, h, buffer))
                 : MagCapture.CaptureAsync(_hwnd, rect, w, h, buffer)).ContinueWith(t =>
                 {
                     Interlocked.Add(ref _frostGrabTicks, System.Diagnostics.Stopwatch.GetTimestamp() - g0);
@@ -549,11 +549,6 @@ public partial class MainWindow
         ShadowHost.Clip = outside;
         FrostHost.Clip = g;
         PhotoHost.Clip = g;
-        Season.Clip = g;
-        Season.Outline = g;
-        if (Season.Kind == "liquid" && Season.IsVisible) Season.InvalidateVisual();   // its rim light is drawn along this outline
-        Season.Width = Math.Max(1, width);
-        Season.Height = Math.Max(1, Island.Height);
         PhotoImage.Width = Math.Max(1, width);
         PhotoImage.Height = Math.Max(1, Island.Height);
         PlaceFrost(width, Island.Height);
@@ -642,7 +637,7 @@ public partial class MainWindow
     private void UpdateAuraVisibility()
     {
         // never over a game or a full-screen video: the glow would cost frames there
-        bool show = _auraBrush != null && !Lite && _mode == Mode.Compact && !_recording.IsRecording && !_gameMode && !_fullscreenHidden && !_hidden;
+        bool show = _auraBrush != null && !Lite && _mode == Mode.Compact && !false && !_fullscreenHidden && !_hidden;
         if (show && _auraPaused) { _auraPaused = false; SetupAura(); return; }   // starts the glow again
         if (!show && _auraBrush != null && !_auraPaused)
         {

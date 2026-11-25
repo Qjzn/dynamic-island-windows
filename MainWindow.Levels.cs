@@ -22,7 +22,6 @@ public partial class MainWindow
     /// <summary>Every few seconds: follow the default output (headphones plugged in) and listen to its volume.</summary>
     private void WatchVolumeDevice()
     {
-        if (!_settings.ShowLevels || _demoMedia != null) return;
         try
         {
             var d = _levelDevices.GetDefaultAudioEndpoint(DataFlow.Render, Role.Multimedia);
@@ -108,7 +107,6 @@ public partial class MainWindow
     /// </summary>
     private void WatchBrightness()
     {
-        if (!_settings.ShowLevels || _noLcd || _demoMedia != null || _brightnessBusy) return;
         _brightnessBusy = true;
         Task.Run(ReadBrightness).ContinueWith(t =>
         {

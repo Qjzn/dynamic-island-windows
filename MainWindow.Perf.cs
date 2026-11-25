@@ -34,7 +34,6 @@ public partial class MainWindow
     /// </summary>
     private void InitStallWatch()
     {
-        Karaoke.Spent = SpentElsewhere;
         _stallTimer = new System.Threading.Timer(_ =>
         {
             long late = Environment.TickCount64 - Interlocked.Read(ref _uiBeat);
@@ -235,7 +234,7 @@ public partial class MainWindow
     private string PerfReport()
     {
         var sb = new StringBuilder();
-        sb.AppendLine($"Atoll {Updater.Current} · Windows {Environment.OSVersion.Version}");
+        sb.AppendLine($"Verjot {System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString(3)} · Windows {Environment.OSVersion.Version}");
         sb.AppendLine("Smoothness: " + PerfSummary());
         sb.AppendLine($"Graphics: {string.Join(" + ", Native.GraphicsCards())} · WPF tier {RenderCapability.Tier >> 16}");
         sb.AppendLine($"CPU threads: {Environment.ProcessorCount}");

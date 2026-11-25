@@ -193,7 +193,6 @@ public sealed class Settings
     public int PomodoroLongMin { get; set; } = 15;
     public DateTime PomodoroCountedOn { get; set; }
     public int PomodoroDone { get; set; }
-    public List<Alarm> Alarms { get; set; } = [];
     /// <summary>The clock widget: face "classic", "minimal" or "digital"; the open tab of the large one.</summary>
     public string ClockFace { get; set; } = "classic";
     public string ClockTab { get; set; } = "clock";
@@ -222,6 +221,10 @@ public sealed class Settings
     // behaviour
     public bool HideInFullscreen { get; set; } = true;
     /// <summary>Verjot: the folder of the notes ("速记") and the meetings; "" = Documents\Verjot.</summary>
+    /// <summary>Verjot chat: the Hermes endpoint (OpenAI-compatible chat completions) and its key.</summary>
+    public string HermesUrl { get; set; } = "";
+    public string HermesKey { get; set; } = "";
+    public string HermesModel { get; set; } = "";
     public string VerjotFolder { get; set; } = "";
     /// <summary>Attached to the top edge of the screen like a notch (true) or floating pill (false).</summary>
     public bool Docked { get; set; }
@@ -263,7 +266,6 @@ public sealed class Settings
     /// <summary>The source used last in the Music tab (see MusicPlayers).</summary>
     public string MusicSource { get; set; } = "";
     public string MusicFolder { get; set; } = "";
-    public List<RadioDirectory.Station> RadioLiked { get; set; } = [];
 
     // chat
     public string ChatProvider { get; set; } = "gemini";
@@ -422,7 +424,7 @@ public sealed class Settings
         Font = "";
         GeminiVoiceApiKey = "";
         Onboarded = true;
-        SeenVersion = Updater.Current.ToString(3);
+        SeenVersion = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "0.1.0";
         var safe = JsonSerializer.SerializeToNode(this) as JsonObject;
         _safeSwaps = [];
         if (own == null || safe == null) return;
