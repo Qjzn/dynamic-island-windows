@@ -26,7 +26,8 @@ public sealed class NotificationHub
     public event Action<Notice>? Added;
     public event Action? Changed;
 
-    public IReadOnlyList<Notice> Items => _items;
+    /// <summary>A snapshot: the UI can enumerate while a background thread adds to the live list.</summary>
+    public IReadOnlyList<Notice> Items { get { lock (_items) { return _items.ToList(); } } }
     public int Unread => _items.Count(n => !n.Read);
     public int UnreadOf(NoticeSource source) => _items.Count(n => !n.Read && n.Sender.Source == source);
 
