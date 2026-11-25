@@ -30,7 +30,7 @@ public partial class App : Application
             return;
         }
 
-        _mutex = new Mutex(true, "DynamicIsland.SingleInstance", out bool created);
+        _mutex = new Mutex(true, "Verjot.SingleInstance", out bool created);
         if (!created && e.Args.Contains("--restart"))
         {
             // relaunched after a language change: wait for the old instance to let go

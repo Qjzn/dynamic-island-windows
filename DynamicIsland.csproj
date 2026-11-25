@@ -9,18 +9,19 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>DynamicIsland</RootNamespace>
-    <AssemblyName>DynamicIsland</AssemblyName>
+    <!-- Verjot on Atoll's island: the namespaces are Atoll's (the upstream code is kept as it is), the program is Verjot -->
+    <AssemblyName>Verjot</AssemblyName>
     <ApplicationIcon>Assets\icon.ico</ApplicationIcon>
     <!-- Program.Main answers the agents hooks before WPF starts -->
     <StartupObject>DynamicIsland.Program</StartupObject>
     <!-- the demo and test fields are set only by the runs compiled in Debug; in a release build they stay empty -->
     <NoWarn Condition="'$(Configuration)' == 'Release'">$(NoWarn);CS0649</NoWarn>
 
-    <Version>2.1.1</Version>
-    <Product>Atoll</Product>
-    <AssemblyTitle>Atoll</AssemblyTitle>
-    <Description>Atoll, a Dynamic Island-style island for Windows: music, lyrics, weather, timers, screenshots, chat and more at the top of the screen.</Description>
-    <Copyright>Copyright (c) 2026 mykolaichechelnytskyi, MIT License</Copyright>
+    <Version>0.1.0</Version>
+    <Product>Verjot</Product>
+    <AssemblyTitle>Verjot</AssemblyTitle>
+    <Description>Verjot: notes, meeting recording and the computer's notifications (Windows, WeChat, WeCom) on a Dynamic Island at the top of the screen. Built on Atoll, MIT License.</Description>
+    <Copyright>Verjot (c) 2026 Qjzn, MIT License. Contains Atoll, Copyright (c) 2026 mykolaichechelnytskyi, MIT License.</Copyright>
     <SatelliteResourceLanguages>ru;en</SatelliteResourceLanguages>
 
     <!-- ScreenRecorderLib is native x64; keep the output path without a platform folder. -->

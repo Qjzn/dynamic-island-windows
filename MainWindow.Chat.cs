@@ -130,7 +130,7 @@ public partial class MainWindow
 
         try
         {
-            var dataDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DynamicIsland", "WebView2");
+            var dataDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Verjot", "WebView2");
             // Google's "device bound sessions" tie a login to a hardware key that embedded browsers
             // can't always re-prove after a restart - which looks like being logged out. Plain cookies instead.
             var options = new CoreWebView2EnvironmentOptions(

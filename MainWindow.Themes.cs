@@ -44,7 +44,7 @@ public partial class MainWindow
     ];
 
     private const string ThemeStoreUrl = "https://raw.githubusercontent.com/Fuwni/dynamic-island-windows/main/themes/themes.json";
-    private static string PhotoPath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "DynamicIsland", "island-photo.jpg");
+    private static string PhotoPath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Verjot", "island-photo.jpg");
 
     // ---------------------------------------------------------------- gallery
 

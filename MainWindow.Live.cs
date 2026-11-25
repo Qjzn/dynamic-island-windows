@@ -71,6 +71,7 @@ public partial class MainWindow
         PomodoroFocusSwitch.IsChecked = _settings.PomodoroFocus;
         _ = _calendar.RefreshAsync(force: true);
         _ = InitNotificationsAsync();
+        Safely("alerts", InitAlerts);
     }
 
     private async Task InitNotificationsAsync()
@@ -98,6 +99,12 @@ public partial class MainWindow
         var lives = new List<(string Id, string? Icon, string? Text, double Ring, Brush Brush)>();
         if (!_recording.IsRecording)   // recording owns the pill (red dot + elapsed, see OnTick)
         {
+            // Verjot: a meeting being recorded comes first — the time in red (and whether the microphone is off)
+            if (_meeting.IsRecording)
+            {
+                var t = _meeting.Elapsed;
+                lives.Add(("meeting", "\uE720", $"{(int)t.TotalMinutes:00}:{t.Seconds:00}" + (_meeting.MicrophoneOff ? V.T(" · 麦克风已关", " · mic off") : ""), -1, (Brush)FindResource("Danger")));
+            }
             if (_gameMode && _stats.Last is { } gs)
             {
                 if (_gameText == null || _tickCount % 4 == 0) _gameText = GameStatsText(gs);   // once a second: every change redraws the window over the game
@@ -185,6 +192,7 @@ public partial class MainWindow
             if (w > _w.Target + 3 || w < _w.Target - (pick.Id == "game" ? 24 : 3)) MorphTo(new Size(w, CompactHeight));
         }
 
+        UpdateAlerts();   // Verjot: unread alerts and the next notice in the queue, the meeting's live activity
         if (_mode == Mode.Expanded && TabTimer.IsChecked == true) UpdateTimerPage();
     }
 
@@ -300,7 +308,8 @@ public partial class MainWindow
 
         CheckCalendar();
 
-        if (_slowCount % 2 == 0 && _settings.MirrorNotifications) await Measure("notifications", PollNotificationsAsync);
+        // Verjot reads every program's notifications once a second (see MainWindow.Verjot.cs)
+        await Measure("alerts", PollAlertsAsync);
         if (_slowCount % 900 == 0) _ = _calendar.RefreshAsync();
         TrackHabits();
         if (_slowCount % 30 == 1) WatchBattery();

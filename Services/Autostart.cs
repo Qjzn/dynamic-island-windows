@@ -14,7 +14,7 @@ public static class Autostart
         Task.Run(async () => await Windows.ApplicationModel.StartupTask.GetAsync(TaskId)).GetAwaiter().GetResult();
 
     private const string RunKey = @"Software\Microsoft\Windows\CurrentVersion\Run";
-    private const string ValueName = "DynamicIsland";
+    private const string ValueName = "Verjot";
 
     private static string Command => $"\"{Environment.ProcessPath}\"";
 

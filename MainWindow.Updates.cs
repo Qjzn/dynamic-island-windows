@@ -20,6 +20,12 @@ public partial class MainWindow
 
     private void InitUpdates()
     {
+        if (!Updater.ForThisProgram)
+        {
+            // Verjot must not install Atoll's releases over itself: new versions come from Verjot's own repository
+            UpdatesTile.Visibility = Visibility.Collapsed;
+            return;
+        }
         AutoUpdateSwitch.IsChecked = _settings.AutoUpdateCheck;
         if (AppPackage.IsPackaged) { UpdatesTile.Visibility = Visibility.Collapsed; return; }   // the Store updates it
         RefreshUpdateUi();
@@ -35,6 +41,7 @@ public partial class MainWindow
 
     private async Task CheckForUpdatesAsync(bool manual)
     {
+        if (!Updater.ForThisProgram) return;
         if (!manual && !_settings.AutoUpdateCheck) return;
         if (manual) UpdateStatus.Text = L.T("Проверяю…");
         try

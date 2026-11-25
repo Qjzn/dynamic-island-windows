@@ -285,7 +285,7 @@ public partial class MainWindow
         try
         {
             // test runs have a profile of their own: the user's sign-ins stay out of them
-            var dataDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DynamicIsland", App.TestRun ? "WebView2MusicTest" : "WebView2Music");
+            var dataDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Verjot", App.TestRun ? "WebView2MusicTest" : "WebView2Music");
             var env = await CoreWebView2Environment.CreateAsync(null, dataDir);
             if (_musicWeb != web) return;   // closed meanwhile
             await web.EnsureCoreWebView2Async(env);

@@ -154,6 +154,7 @@ public partial class MainWindow : Window
         Safely("claude", InitClaude);
         Safely("recording", InitRecording);
         Safely("extras", InitExtras);
+        Safely("meeting", InitMeeting);
 
         OnTick();
         _tick.Start();
@@ -180,6 +181,7 @@ public partial class MainWindow : Window
                 var tab = args[i + 1] switch
                 {
                     "music" => TabMusic, "weather" => TabWeather, "chat" => TabChat,
+                    "notify" => TabNotify, "meeting" => TabMeeting,
                     "timer" => TabTimer, "clip" => TabClip, "notes" => TabNotes,
                     "calendar" => TabCalendar, "system" => TabSystem, "widgets" => TabWidgets,
                     "settings" => TabSettings, _ => TabHome,
@@ -221,6 +223,12 @@ public partial class MainWindow : Window
                         }
                     }
                     cover.Close();
+                    Application.Current.Shutdown();
+                    return;
+                }
+                if (action == "verjotshots")   // test (Verjot): the pages, and a real short meeting
+                {
+                    await VerjotShotsAsync(args.ElementAtOrDefault(r + 2) ?? System.IO.Path.GetTempPath());
                     Application.Current.Shutdown();
                     return;
                 }
@@ -3394,6 +3402,7 @@ public partial class MainWindow : Window
                 case 4: _ = RunAction("record"); break;
                 case 5 or 6: ToggleCommandBar(); break;
                 case 7: ToggleOpenFromKeyboard(); break;
+                case >= 20 and <= 29: OnVerjotHotkey(wParam.ToInt32()); break;   // Verjot's shortcuts
             }
             handled = true;
         }
@@ -3406,7 +3415,7 @@ public partial class MainWindow : Window
     {
         if (_shutDown) return;
         _shutDown = true;
-        for (int id = 1; id <= 7; id++) Native.UnregisterHotKey(_hwnd, id);
+        for (int id = 1; id <= 29; id++) Native.UnregisterHotKey(_hwnd, id);
         Native.RemoveClipboardFormatListener(_hwnd);
         _sideToast?.Close();
         ShutdownChat();
@@ -3419,6 +3428,9 @@ public partial class MainWindow : Window
         ShutdownControlCenter(); // taskbar and desktop icons come back
         if (_tray != null) { _tray.Visible = false; _tray.Dispose(); }
         if (_recording.IsRecording) _recording.Stop();
+        // a meeting still running: it is written to its MP3 before the program goes (up to 20 s)
+        try { if (_meeting.IsRecording) _meeting.StopAndWait(); } catch { /* the lossless files stay */ }
+        _meeting.Dispose();
     }
 
     // ================================================================ position
@@ -3774,9 +3786,9 @@ public partial class MainWindow : Window
         }
     }
 
-    private RadioButton[] Tabs => [TabHome, TabMusic, TabWeather, TabChat, TabTimer, TabClip, TabNotes, TabCalendar, TabSystem, TabWidgets, TabSettings];
+    private RadioButton[] Tabs => [TabHome, TabNotify, TabMeeting, TabMusic, TabWeather, TabChat, TabTimer, TabClip, TabNotes, TabCalendar, TabSystem, TabWidgets, TabSettings];
 
-    private FrameworkElement[] AllPages => [HomePage, MusicPage, WeatherPage, ChatPage, TimerPage, ClipPage, NotesPage, CalendarPage, SystemPage, WidgetsPage, SettingsPage];
+    private FrameworkElement[] AllPages => [HomePage, NotifyPage, MeetingPage, MusicPage, WeatherPage, ChatPage, TimerPage, ClipPage, NotesPage, CalendarPage, SystemPage, WidgetsPage, SettingsPage];
 
     private FrameworkElement CurrentPage
     {
@@ -3798,7 +3810,7 @@ public partial class MainWindow : Window
                 return new Size(page.Width + 28, 10 + 32 + 10 + page.DesiredSize.Height + 14);
             }
             case Mode.Toast:
-                return new Size(Math.Clamp(ToastWidth(), 260, 420), 58);
+                return new Size(Math.Clamp(ToastWidth(), 260, 440), ToastHeight);
             case Mode.Claude:
             {
                 ClaudeView.Measure(new Size(ClaudeView.Width, double.PositiveInfinity));
@@ -3821,9 +3833,12 @@ public partial class MainWindow : Window
 
     private double ToastWidth()
     {
-        ToastView.Measure(new Size(double.PositiveInfinity, 58));
+        ToastView.Measure(new Size(double.PositiveInfinity, ToastHeight));
         return ToastView.DesiredSize.Width + 30;
     }
+
+    /// <summary>The toast island: two lines and the sender's line under a notice from another program.</summary>
+    private const double ToastHeight = 66;
 
     private void SetMode(Mode mode)
     {
@@ -3960,6 +3975,8 @@ public partial class MainWindow : Window
         else if (TabSettings.IsChecked == true) RefreshSettingsPage();
         else if (TabClip.IsChecked == true) RenderClipSection();
         else if (TabNotes.IsChecked == true) RenderNotes();
+        else if (TabNotify.IsChecked == true) OpenAlertsPage();
+        else if (TabMeeting.IsChecked == true) RenderMeeting();
         else if (TabCalendar.IsChecked == true) RenderCalendar();
         else if (TabTimer.IsChecked == true) RenderTimer();
         else if (TabSystem.IsChecked == true) _ = RefreshSystemAsync(full: true);
@@ -4512,6 +4529,7 @@ public partial class MainWindow : Window
             MenuBuddy.Cheer();
             return;
         }
+        ToastExtrasReset();
         _toastKept = kept;
         ToastIcon.Text = glyph;
         ToastTitle.Text = title;
@@ -4590,10 +4608,15 @@ public partial class MainWindow : Window
         _tray = new Forms.NotifyIcon
         {
             Icon = new System.Drawing.Icon(iconStream, Forms.SystemInformation.SmallIconSize),
-            Text = Settings.Safe ? "Atoll · " + L.T("безопасный режим") : "Atoll",
+            Text = Settings.Safe ? "Verjot · " + L.T("безопасный режим") : "Verjot",
             Visible = true,
             ContextMenuStrip = new Forms.ContextMenuStrip(),
         };
+        // Verjot's three things come first
+        _tray.ContextMenuStrip.Items.Add(V.T("通知", "Alerts"), null, (_, _) => OpenTab(TabNotify));
+        _tray.ContextMenuStrip.Items.Add(V.T("会议录音  (Ctrl+Alt+L)", "Meeting recording  (Ctrl+Alt+L)"), null, (_, _) => _ = ToggleMeeting());
+        _tray.ContextMenuStrip.Items.Add(V.T("速记  (Ctrl+Alt+J)", "Quick note  (Ctrl+Alt+J)"), null, (_, _) => QuickNote());
+        _tray.ContextMenuStrip.Items.Add(new Forms.ToolStripSeparator());
         _tray.ContextMenuStrip.Items.Add(L.T("Показать / спрятать  (Ctrl+Alt+I)"), null, (_, _) => ToggleHidden());
         _tray.ContextMenuStrip.Items.Add(L.T("Скриншот области  (Ctrl+Alt+S)"), null, (_, _) => _ = RunAction("region"));
         _tray.ContextMenuStrip.Items.Add(L.T("Выровнять по центру"), null, (_, _) => AlignIsland());

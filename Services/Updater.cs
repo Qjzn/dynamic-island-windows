@@ -16,6 +16,12 @@ namespace DynamicIsland.Services;
 public static class Updater
 {
     public const string Repo = "Fuwni/dynamic-island-windows";
+
+    /// <summary>
+    /// Whether this program is the one the releases of <see cref="Repo"/> are made for. Verjot is built on
+    /// Atoll's code, but it is not Atoll: an "update" would put Atoll in place of Verjot, so there are no updates from here.
+    /// </summary>
+    public static readonly bool ForThisProgram = Assembly.GetExecutingAssembly().GetName().Name == "DynamicIsland";
     public static string ReleasesPage => $"https://github.com/{Repo}/releases/latest";
 
     public sealed record UpdateInfo(Version Version, string Tag, string? SetupUrl, long SetupSize, string? Sha256, string PageUrl);

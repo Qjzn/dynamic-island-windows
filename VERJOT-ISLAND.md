@@ -1,0 +1,102 @@
+# Verjot Island（片言 · 灵动岛版）
+
+Verjot 跑在灵动岛上：岛体来自 [Atoll](https://github.com/Fuwni/dynamic-island-windows)（MIT，C# / WPF / .NET 10），
+Verjot 的会议录音和速记做成岛上的页面，并新增“通知”页，统一处理 **Windows 系统通知、微信、企业微信**。
+
+> 本目录是 Atoll 的克隆，在 `verjot-island` 分支上改动。上游代码保持原名（命名空间 `DynamicIsland`），Verjot 的新代码都在 `Verjot/` 目录。Verjot 原仓库（WinForms 版）克隆在 `E:\zdwork\Verjot`，未改动。
+
+## 运行
+
+| 事项 | 说明 |
+| --- | --- |
+| 程序 | `bin\Debug\net10.0-windows10.0.19041.0\Verjot.exe`（Debug 版，内存约 230 MB；Release 版未发布） |
+| 运行时 | .NET 10 Desktop Runtime（本机已装 10.0.12） |
+| SDK | 本机原本没有。装在 `E:\zdwork\tools\dotnet`（10.0.404，便携目录，没有改系统 PATH） |
+| 构建 | `E:\zdwork\tools\dotnet\dotnet.exe build -c Release` |
+| 单元测试 | `E:\zdwork\tools\dotnet\dotnet.exe test tests/DynamicIsland.Tests`（上游 280 项，当前全部通过） |
+| 数据 | 设置 `%APPDATA%\Verjot\settings.json`，日志 `%LOCALAPPDATA%\Verjot\log.txt` |
+
+首次运行需要在 Windows 里允许访问通知：设置 → 通知 → 允许应用访问通知。通知页顶部会有提示，点击可直达。
+
+## 用法
+
+| 操作 | 方式 |
+| --- | --- |
+| 看通知 | 鼠标移到岛上 → “通知”页。按来源筛选（全部 / 微信 / 企业微信 / 系统 / 其他），悬停卡片出现“打开 / 记下 / 复制 / 移除”，左滑删除 |
+| 新通知 | 岛体弹开成预览（来源图标 + 标题 + 正文），底部细线走完后收起，未读数显示在胶囊右侧 |
+| 点通知 | 回到发通知的应用 |
+| 录会议 | “会议”页，或 `Ctrl+Alt+L`。`Ctrl+Alt+K` 标记重点。录音时胶囊常驻“红色麦克风 + 计时 + 声音条” |
+| 速记 | “速记”页，或 `Ctrl+Alt+J`。回车保存 |
+| 文件位置 | 笔记 `Documents\Verjot\速记\YYYY-MM-DD.md`；会议 `Documents\Verjot\VerjotYYYYMMDDHHMM\VerjotYYYYMMDDHHMM.mp3`（与 Verjot 原版同一套约定）。可在 `settings.json` 的 `VerjotFolder` 里改 |
+
+默认只显示六个页签：首页、通知、会议、速记、计时器、音乐。Atoll 的其它页面（天气、聊天、剪贴板、日历、系统、小组件）仍在，在“设置 → 布局”里可以打开。
+
+## 通知是怎么采到的
+
+| 来源 | 机制 | 能拿到什么 |
+| --- | --- | --- |
+| Windows 系统通知 | `UserNotificationListener` 每秒轮询（系统 API，需要授权） | 应用名、标题、正文、图标 |
+| 发送方缺失的传统程序 | 从系统通知数据库的副本里按通知 ID 查发送方（`WpnDatabase.cs`，用系统自带 `winsqlite3.dll`） | 补出 AppUserModelId，再映射到进程、图标和产品名 |
+| 微信、企业微信 | 任务栏按钮闪动事件（`RegisterShellHookWindow` → `HSHELL_FLASH`） | 只有“有新消息”，没有正文 |
+
+为什么微信和企业微信只有“有新消息”：实测（本机微信 4.2.0.53、企业微信 5.0.13.8030）这两个程序不发系统 Toast（通知数据库里微信只有“分享扩展”一条记录，企业微信没有记录），而且它们的界面是 Qt，UI 自动化树只有外壳节点，读不到会话列表。要读正文只能改微信进程内存，有封号和稳定性风险，本版不做。
+
+其它限制：
+- 闪动事件只在应用窗口在任务栏上时才有；缩到托盘里的窗口不会闪。
+- 传统程序发送方的数据库结构没有官方文档，Windows 更新后可能失效；失效时只影响“显示谁发的”，不影响通知本身。
+- 同一应用 8 秒内的连续闪动合并成一条。
+
+## 代码结构
+
+```
+Verjot/
+  Services/
+    ToastReader.cs        读取系统通知（每个 Toast 只报一次）
+    WpnDatabase.cs        按通知 ID 查发送方
+    SenderResolver.cs     发送方 → 名称、图标、进程、来源分类（微信 / 企业微信 / 系统 / 其他）
+    NotificationHub.cs    通知列表、未读计数
+    MeetingRecorder.cs   会议录音：麦克风 + 电脑声音 → 混音 → MP3（192 kbps，Windows 自带编码器）
+    VerjotFiles.cs        笔记与会议的目录、每天一个 Markdown、最近会议
+    V.cs                  新页面的中英文文案
+  Views/
+    NoticeList.cs         通知卡片列表（弹簧展开、滑动删除）
+    LevelWave.cs          声音条
+  MainWindow.Alerts.cs    通知页、预览、队列、点击回到应用
+  MainWindow.Meeting.cs   会议页、胶囊里的实时活动、快捷键
+  MainWindow.VerjotPages.cs  默认页签、速记页的文件入口
+  MainWindow.VerjotShots.cs  诊断运行（仅 Debug）
+```
+
+对上游文件的改动都很小，集中在：`MainWindow.xaml`（通知页、会议页、Toast 结构）、`MainWindow.xaml.cs`（页签数组、快捷键、托盘菜单、退出时保存录音）、`MainWindow.Live.cs`（实时活动、轮询入口）、`MainWindow.Activity.cs`（闪动事件）、`Services/NotesStore.cs`（改为读写 Verjot 的 Markdown）、`DynamicIsland.csproj`（程序名、版本、版权）。
+
+约定：
+- 新增界面文案用 `V.T("中文", "English")`，不走上游的俄语键翻译表。
+- 上游的 `--run` 测试机制被复用：`Verjot.exe --run verjotshots <目录> --lang zh` 会渲染各页面截图到目录，并真实录一段音验证 MP3 导出。
+
+## 验证记录（2026-11-25，本机）
+
+| 项目 | 结果 |
+| --- | --- |
+| 构建 | Debug 通过，0 警告 0 错误 |
+| 上游单元测试 | 280 / 280 通过 |
+| 通知读取 | 探测工具和真实运行各一次，`RequestAccessAsync` 返回 `Allowed`；系统 Toast 发出后 1 秒内出现在日志 |
+| 发送方识别 | `app:desktop` 类程序（如 WorkBuddy）`AppInfo` 抛异常，走数据库回退后识别到进程 |
+| 微信 / 企业微信闪动 | 用探测工具把 `HSHELL_FLASH` 消息按窗口句柄投给运行中的应用，日志各出现一条“有新消息”。**没有用真实消息验证过**（当时两个窗口都缩到了托盘，没有任务栏按钮） |
+| 录音导出 | 真实录制 6.5 秒 → MP3 213–232 KB，`work/` 清理，重点标记写入同名 `.md` |
+| 界面 | 诊断截图：通知页、Toast 预览、录音中的胶囊、会议页、速记页渲染正常 |
+| 点击通知回到应用 | 第一次真实运行时抛了 `EntryPointNotFoundException`（P/Invoke 漏写入口名），已修复，**修复后没有再点过** |
+| 性能 | 真实运行中日志出现过一次“UI 线程 4 秒无响应”，发生在切换主题时；之后没有复现，原因未定位 |
+
+## 还没做的
+
+- 微信、企业微信的**正文**（见上）。可行的下一步是对它们自己的弹窗做截图 OCR，需要真实消息来调。
+- 原版 Verjot 的便签编辑器（RichEdit、贴边标签、图片粘贴）没有移植，岛上速记是纯 Markdown 列表。
+- 转写 API 没有移植。
+- 没有安装包，没有发布配置，Release 版没跑过。
+- 安装包、第三方声明文件、应用图标之外的产物都还是 Atoll 的。
+
+## 许可
+
+- 上游 Atoll：MIT，版权归 mykolaichechelnytskyi，`LICENSE` 原样保留。
+- Verjot：MIT（原仓库 `E:\zdwork\Verjot\LICENSE`）。
+- 两边都兼容，可以合并分发。注意 fly-island（GPL-3.0）、浮屿 Fuyu（AGPL-3.0）的代码没有用，也不能用。

@@ -6,7 +6,7 @@ namespace DynamicIsland.Services;
 public static class Log
 {
     internal static string FilePath { get; set; } = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DynamicIsland", "log.txt");
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Verjot", "log.txt");
 
     private static volatile string _secret = "";
     private static readonly Dictionary<string, int> Repeats = [];

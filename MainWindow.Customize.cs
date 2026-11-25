@@ -175,9 +175,9 @@ public partial class MainWindow
     // ================================================================ tabs: order and which ones are shown
 
     private static readonly string[] DefaultTabOrder =
-        ["TabHome", "TabMusic", "TabWeather", "TabChat", "TabTimer", "TabClip", "TabNotes", "TabCalendar", "TabSystem", "TabWidgets"];
+        ["TabHome", "TabNotify", "TabMeeting", "TabMusic", "TabWeather", "TabChat", "TabTimer", "TabClip", "TabNotes", "TabCalendar", "TabSystem", "TabWidgets"];
 
-    private RadioButton[] AllPageTabs => [TabHome, TabMusic, TabWeather, TabChat, TabTimer, TabClip, TabNotes, TabCalendar, TabSystem, TabWidgets];
+    private RadioButton[] AllPageTabs => [TabHome, TabNotify, TabMeeting, TabMusic, TabWeather, TabChat, TabTimer, TabClip, TabNotes, TabCalendar, TabSystem, TabWidgets];
 
     private RadioButton[]? _pageTabs;
 

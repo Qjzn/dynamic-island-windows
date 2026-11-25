@@ -11,7 +11,7 @@ namespace DynamicIsland.Services;
 public static class StartupGuard
 {
     private static string FilePath => Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "DynamicIsland", "startup.pending");
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Verjot", "startup.pending");
 
     private static bool _on;
 

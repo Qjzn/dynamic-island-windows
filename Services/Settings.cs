@@ -110,8 +110,8 @@ public sealed class Settings
     public int HoverDelay { get; set; } = 100;
     /// <summary>The chime of a finished timer, a reminder, an event.</summary>
     public bool Sounds { get; set; } = true;
-    /// <summary>The welcome steps have been shown.</summary>
-    public bool Onboarded { get; set; }
+    /// <summary>The welcome steps have been shown. On from the start in Verjot (they are Atoll's).</summary>
+    public bool Onboarded { get; set; } = true;
     /// <summary>The version whose "what's new" the user has seen.</summary>
     public string SeenVersion { get; set; } = "";
     /// <summary>Themes the user made: id, name, colours, aura, scene.</summary>
@@ -162,8 +162,8 @@ public sealed class Settings
     /// <summary>The same for the "Полупрозрачная" and "Матовая" themes.</summary>
     public int ClearTint { get; set; } = 70;
     public int MatteTint { get; set; } = 50;
-    /// <summary>Lower half of the island fades to see-through.</summary>
-    public bool BottomFade { get; set; } = true;
+    /// <summary>Lower half of the island fades to see-through. Off for Verjot: its pages are lists to read.</summary>
+    public bool BottomFade { get; set; } = false;
     /// <summary>Shimmering colour along the lower edge when idle: none, aurora, sunset, ocean, neon, mono.</summary>
     public string Aura { get; set; } = "aurora";
     /// <summary>Panels land with a small springy hop.</summary>
@@ -221,6 +221,8 @@ public sealed class Settings
 
     // behaviour
     public bool HideInFullscreen { get; set; } = true;
+    /// <summary>Verjot: the folder of the notes ("速记") and the meetings; "" = Documents\Verjot.</summary>
+    public string VerjotFolder { get; set; } = "";
     /// <summary>Attached to the top edge of the screen like a notch (true) or floating pill (false).</summary>
     public bool Docked { get; set; }
     public bool ExpandOnHover { get; set; } = true;
@@ -355,7 +357,7 @@ public sealed class Settings
     /// <summary>The settings file; tests point it elsewhere.</summary>
     internal static string FilePath { get; set; } = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-        "DynamicIsland", "settings.json");
+        "Verjot", "settings.json");
 
     private const int CurrentVersion = 3;
 

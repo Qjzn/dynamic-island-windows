@@ -287,6 +287,7 @@ public partial class MainWindow
 
     private void RenderNotes()
     {
+        NotesStore.Resync();   // the file may have been written by the Verjot sticky note meanwhile
         NotesList.Children.Clear();
         foreach (var n in NotesStore.Notes)
         {

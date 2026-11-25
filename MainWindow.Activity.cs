@@ -45,6 +45,8 @@ public partial class MainWindow
 
     private void OnWindowFlash(IntPtr window)
     {
+        // WeChat and WeCom blink in the taskbar instead of sending system toasts: their blink is an alert of its own
+        if (OnTaskbarBlink(window)) return;
         if (!FlashFallback || _demoMedia != null || window == IntPtr.Zero || window == _hwnd) return;
         if (window == Native.GetForegroundWindow()) return;   // you are looking at it
         string name;
@@ -124,12 +126,9 @@ public partial class MainWindow
         if (_flashAt.TryGetValue(name, out var at) && now - at < TimeSpan.FromSeconds(8)) return;   // one blink series = one notice
         _flashAt[name] = now;
 
-        _unread++;
         Log.Write("taskbar blink: " + name);
-        if (FocusMode.IsOn) return;
-        var app = ProgressWatcher.Friendly(name);
-        WhenNotTyping(() => ShowToast("", app, L.T("Новое сообщение"), () => Native.SetForegroundWindow(window),
-            new SolidColorBrush(Color.FromRgb(0x2A, 0xAB, 0xEE)), ms: 4500, keep: true));
+        // Verjot: a messenger's unread counter is an alert like any other (the Alerts page and the pill's counter)
+        AddBlinkNotice(name, window, null, ProgressWatcher.Friendly(name));
     }
 
     // ------------------------------------------------------------------ the monitor the mouse is on
