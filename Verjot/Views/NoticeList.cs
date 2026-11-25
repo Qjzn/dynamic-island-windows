@@ -281,6 +281,7 @@ public sealed class NoticeList : StackPanel
         var body = new TextBlock { Text = n.HasBody ? n.Body : "", FontSize = 12.5, TextWrapping = TextWrapping.Wrap, TextTrimming = TextTrimming.CharacterEllipsis, MaxHeight = 57, Margin = new Thickness(0, 3, 0, 0) };
         body.SetResourceReference(TextBlock.ForegroundProperty, "Fg");
         body.Visibility = n.HasBody && n.Body.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
+        body.ToolTip = n.HasBody && n.Body.Length > 0 ? n.Body : null;   // the whole text, without opening anything
         var words = new StackPanel { Margin = new Thickness(12, 0, 8, 0), VerticalAlignment = VerticalAlignment.Center, Children = { head, body } };
 
         var dot = new Border { Width = 3, Height = 18, CornerRadius = new CornerRadius(1.5), Margin = new Thickness(0, 0, 9, 0), VerticalAlignment = VerticalAlignment.Center, Visibility = Visibility.Collapsed };
@@ -316,6 +317,8 @@ public sealed class NoticeList : StackPanel
             actions.Children.Add(b);
         }
         Button(n.HasBody ? "打开" : "查看", n.HasBody ? "Open" : "Show", () => Open?.Invoke(n));
+        if (n.HasBody && (n.Body.Length > 120 || n.Body.Contains('\n')))
+            Button("展开", "More", () => ToggleText(row));   // reading a long one needs no click that opens anything
         if (n.HasBody && (n.Body.Length > 0 || n.Title.Length > 0))
         {
             Button("记下", "Keep", () => Keep?.Invoke(n));
@@ -351,13 +354,20 @@ public sealed class NoticeList : StackPanel
         Apply(row);
     }
 
+    /// <summary>
+    /// A click on a card does what a click on a Windows toast does: the program comes up (and the notice is read).
+    /// The whole message, when it is long, is read with "More" or the tooltip.
+    /// </summary>
     private void Click(Row row)
     {
         _drag = null;
         Touched?.Invoke();
         if (!row.Notice.Read) { row.Notice.Read = true; Refresh(); }
-        bool longText = row.Notice.HasBody && row.Body.Visibility == Visibility.Visible && (row.Body.Text.Length > 90 || row.Body.Text.Contains('\n'));
-        if (!longText) { Open?.Invoke(row.Notice); return; }
+        Open?.Invoke(row.Notice);
+    }
+
+    private void ToggleText(Row row)
+    {
         row.Open = !row.Open;
         row.Body.MaxHeight = row.Open ? 4000 : 57;
         row.Body.TextTrimming = row.Open ? TextTrimming.None : TextTrimming.CharacterEllipsis;

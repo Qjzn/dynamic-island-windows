@@ -264,36 +264,116 @@ public partial class MainWindow
 
     // ---------------------------------------------------------------- what a click does
 
-    /// <summary>Brings the program of a notice up (its window, or the client itself).</summary>
+    /// <summary>
+    /// What a click on a notice does, as it does for Windows' own toasts: the program it came from comes up, and the
+    /// notice counts as read. The island never takes the focus, so the window is brought up in the ways Windows
+    /// allows; a program that cannot be opened says so instead of vanishing.
+    /// </summary>
     private void BringUp(Notice n)
     {
         _alerts.MarkRead(n);
+        string? how = null;
         try
         {
-            IntPtr w = n.Window;
-            if ((w == IntPtr.Zero || !Native.IsWindow(w)) && n.Sender.Process != null)
+            IntPtr window = n.Window;
+            if (window == IntPtr.Zero || !Native.IsWindow(window)) window = MainWindowOf(n.Sender.Process);
+            if (window != IntPtr.Zero && WindowsFocus.Activate(window))
             {
-                foreach (var p in Process.GetProcessesByName(n.Sender.Process))
+                how = "window";
+                // a program that was busy a moment ago can take the foreground straight back: once more, shortly after
+                IntPtr target = window;
+                _ = Dispatcher.InvokeAsync(async () =>
                 {
-                    using (p) { if (p.MainWindowHandle != IntPtr.Zero) { w = p.MainWindowHandle; break; } }
-                }
+                    await Task.Delay(450);
+                    if (Native.GetForegroundWindow() != target && WindowsFocus.Activate(target)) Log.Write("alert: in front, second try");
+                }, DispatcherPriority.Background);
             }
-            if (w != IntPtr.Zero && Native.IsWindow(w))
+
+            // 2. a chat client that lives in its tray: its own link opens it (and shows the main window)
+            if (how == null && LinkOf(n.Sender.Source) is { } link && TryStart(link))
             {
-                if (!AlertIsWindowVisible(w) && n.Sender.Source is NoticeSource.WeChat or NoticeSource.WeCom) w = IntPtr.Zero;   // it sits in its tray
-                else
+                how = "link";
+                // it shows its window by itself; a moment later the window is pulled to the front, because a program
+                // started from the background is not always allowed to take the foreground on its own
+                string? process = n.Sender.Process;
+                _ = Dispatcher.InvokeAsync(async () =>
                 {
-                    if (Native.IsIconic(w)) AlertShowWindow(w, 9);   // SW_RESTORE
-                    Native.SetForegroundWindow(w);
-                    return;
-                }
+                    for (int attempt = 0; attempt < 6; attempt++)
+                    {
+                        await Task.Delay(650);
+                        IntPtr window = MainWindowOf(process);
+                        if (window == IntPtr.Zero) continue;
+                        if (WindowsFocus.Activate(window)) { Log.Write($"alert: {n.Sender.Name} in front (attempt {attempt + 1})"); return; }
+                    }
+                    Log.Write($"alert: {n.Sender.Name} shown but not in front");
+                }, DispatcherPriority.Background);
             }
-            // nothing to show: the client's own link brings it up
-            string? link = n.Sender.Source switch { NoticeSource.WeChat => "weixin://", NoticeSource.WeCom => "wxwork://", _ => null };
-            if (link != null) { Process.Start(new ProcessStartInfo(link) { UseShellExecute = true }); return; }
-            if (n.Sender.ExePath is { Length: > 0 } exe && File.Exists(exe)) Process.Start(new ProcessStartInfo(exe) { UseShellExecute = true });
+
+            // 3. a packaged program: Windows' own way, the one a toast's click uses
+            if (how == null && WindowsFocus.ActivateApp(n.Sender.Aumid)) how = "package";
+
+            // 4. the program itself, but only when it is not running (a second copy would help nobody)
+            if (how == null && n.Sender.ExePath is { Length: > 0 } exe && File.Exists(exe) && !IsRunning(n.Sender.Process) && TryStart(exe)) how = "exe";
+
+            if (how == null) ShowToast("\uE7BA", V.T("没能打开", "Could not open"), n.Sender.Name, ms: 3200);
         }
         catch (Exception ex) { Log.Write("alerts: open: " + ex.GetType().Name + ": " + ex.Message); }
+        Log.Write($"alert open: {n.Sender.Name} -> {how ?? "nothing"}");
+    }
+
+    /// <summary>The program's own main window, or a visible top-level window of it.</summary>
+    private static IntPtr MainWindowOf(string? process)
+    {
+        if (string.IsNullOrEmpty(process)) return IntPtr.Zero;
+        try
+        {
+            foreach (var p in Process.GetProcessesByName(process))
+            {
+                using (p)
+                {
+                    if (p.MainWindowHandle != IntPtr.Zero) return p.MainWindowHandle;
+                    IntPtr found = IntPtr.Zero;
+                    EnumWindows((h, _) =>
+                    {
+                        Native.GetWindowThreadProcessId(h, out uint pid);
+                        if ((int)pid == p.Id && VisibleOf(h) && Native.GetWindowText(h, new System.Text.StringBuilder(8), 8) > 0)
+                        {
+                            found = h;
+                            return false;
+                        }
+                        return true;
+                    }, IntPtr.Zero);
+                    if (found != IntPtr.Zero) return found;
+                }
+            }
+        }
+        catch (Exception ex) { Log.Write("alerts: windows: " + ex.GetType().Name); }
+        return IntPtr.Zero;
+    }
+
+    private static string? LinkOf(NoticeSource source) => source switch
+    {
+        NoticeSource.WeChat => "weixin://",
+        NoticeSource.WeCom => "wxwork://",
+        _ => null,
+    };
+
+    private static bool IsRunning(string? process)
+    {
+        if (string.IsNullOrEmpty(process)) return false;
+        try
+        {
+            var all = Process.GetProcessesByName(process);
+            foreach (var p in all) p.Dispose();
+            return all.Length > 0;
+        }
+        catch { return false; }
+    }
+
+    private static bool TryStart(string target)
+    {
+        try { Process.Start(new ProcessStartInfo(target) { UseShellExecute = true }); return true; }
+        catch (Exception ex) { Log.Write("alerts: start " + target + ": " + ex.GetType().Name + ": " + ex.Message); return false; }
     }
 
     private void KeepNotice(Notice n)
@@ -339,6 +419,5 @@ public partial class MainWindow
     private void NotifyStatus_Click(object sender, MouseButtonEventArgs e) =>
         Process.Start(new ProcessStartInfo("ms-settings:privacy-notifications") { UseShellExecute = true });
 
-    [DllImport("user32.dll", EntryPoint = "IsWindowVisible")] private static extern bool AlertIsWindowVisible(IntPtr h);
-    [DllImport("user32.dll", EntryPoint = "ShowWindow")] private static extern bool AlertShowWindow(IntPtr h, int command);
+    [DllImport("user32.dll", EntryPoint = "IsWindowVisible")] private static extern bool VisibleOf(IntPtr h);
 }

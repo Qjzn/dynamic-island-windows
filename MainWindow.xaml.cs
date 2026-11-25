@@ -226,6 +226,12 @@ public partial class MainWindow : Window
                     Application.Current.Shutdown();
                     return;
                 }
+                if (action == "focuscheck")   // test (Verjot): does a click on a notice really bring the program up?
+                {
+                    await FocusCheckAsync(args.ElementAtOrDefault(r + 2) ?? System.IO.Path.GetTempPath());
+                    Application.Current.Shutdown();
+                    return;
+                }
                 if (action == "verjotshots")   // test (Verjot): the pages, and a real short meeting
                 {
                     await VerjotShotsAsync(args.ElementAtOrDefault(r + 2) ?? System.IO.Path.GetTempPath());
@@ -4556,7 +4562,9 @@ public partial class MainWindow : Window
         if (_toastKept != null) HomeMissed.Forget(_toastKept);   // seen and acted on: not missed
         _toastKept = null;
         SetMode(Mode.Compact);
-        a?.Invoke();
+        if (a == null) return;
+        try { a(); }
+        catch (Exception ex) { Log.Write("toast: click: " + ex.GetType().Name + ": " + ex.Message); }
     }
 
     // ================================================================ theme

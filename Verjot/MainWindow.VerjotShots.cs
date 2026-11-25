@@ -1,5 +1,7 @@
 #if DEBUG
+using System.Diagnostics;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -106,6 +108,60 @@ public partial class MainWindow
         }
         catch (Exception ex) { log.Add("FAILED: " + ex); }
         File.WriteAllLines(Path.Combine(dir, "verjot-shots.txt"), log);
+    }
+
+    [DllImport("user32.dll", EntryPoint = "IsWindowVisible")] private static extern bool TestIsWindowVisible(IntPtr h);
+    [DllImport("user32.dll", EntryPoint = "ShowWindow")] private static extern bool TestShowWindow(IntPtr h, int command);
+
+    /// <summary>
+    /// Test run <c>--run focuscheck &lt;dir&gt;</c>: a click on a notice must bring the program up — a minimized
+    /// program with a window, and WeChat sitting in its tray (through its own link).
+    /// </summary>
+    private async Task FocusCheckAsync(string dir)
+    {
+        Directory.CreateDirectory(dir);
+        Settings.ReadOnly = true;
+        NoClickOutside = true;
+        var log = new List<string>();
+        try
+        {
+            var notepad = Process.Start(new ProcessStartInfo("notepad.exe") { UseShellExecute = true });
+            await Task.Delay(1800);
+            notepad!.Refresh();
+            IntPtr window = notepad.MainWindowHandle;
+            log.Add($"notepad pid={notepad.Id} hwnd=0x{window:X} visible={TestIsWindowVisible(window)}");
+            TestShowWindow(window, 6);   // SW_MINIMIZE: as if it were behind something
+            await Task.Delay(600);
+            log.Add($"minimized: iconic={Native.IsIconic(window)} foreground=0x{Native.GetForegroundWindow():X}");
+            IntPtr before = Native.GetForegroundWindow();
+            log.Add($"foreground before: 0x{before:X} class={Native.ClassName(before)} title={Native.WindowText(before)}");
+            BringUp(new Notice { Sender = new Sender { Name = "Notepad", Process = "notepad", Source = NoticeSource.Other }, Window = window, Title = "test" });
+            for (int i = 0; i < 8; i++)
+            {
+                await Task.Delay(150);
+                IntPtr fg = Native.GetForegroundWindow();
+                log.Add($"t+{150 * (i + 1)}ms: fg=0x{fg:X} ({Native.ClassName(fg)}) notepadIconic={Native.IsIconic(window)}");
+            }
+            try { notepad.Kill(); } catch { /* already gone */ }
+
+            // WeChat lives in its tray here: its link must bring the window up
+            BringUp(new Notice { Sender = new Sender { Name = V.T("微信", "WeChat"), Source = NoticeSource.WeChat, Process = "Weixin" }, HasBody = false });
+            var sequence = new List<string>();
+            for (int i = 0; i < 15; i++)
+            {
+                await Task.Delay(200);
+                IntPtr fg = Native.GetForegroundWindow();
+                sequence.Add($"0x{fg:X}({Native.ClassName(fg)})");
+                if (Process.GetProcessesByName("Weixin").Any(p => p.MainWindowHandle == fg)) break;
+            }
+            var wechat = Process.GetProcessesByName("Weixin").FirstOrDefault(p => p.MainWindowHandle != IntPtr.Zero);
+            IntPtr chatWindow = wechat?.MainWindowHandle ?? IntPtr.Zero;
+            wechat?.Dispose();
+            log.Add("foreground after the WeChat click: " + string.Join(" ", sequence));
+            log.Add($"WeChat window 0x{chatWindow:X} class={Native.ClassName(chatWindow)} visible={(chatWindow != IntPtr.Zero && TestIsWindowVisible(chatWindow))}");
+        }
+        catch (Exception ex) { log.Add("FAILED: " + ex); }
+        File.WriteAllLines(Path.Combine(dir, "focuscheck.txt"), log);
     }
 }
 #endif

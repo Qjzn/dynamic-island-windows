@@ -66,6 +66,24 @@ internal static class SenderResolver
             }
             if (s.Source == NoticeSource.WeChat) s.Name = V.T("微信", "WeChat");
             else if (s.Source == NoticeSource.WeCom) s.Name = V.T("企业微信", "WeCom");
+            // an id of the form "{…}\Folder\app.exe": the program's own path, so a notice of a closed one can open it
+            if (s.ExePath is not { Length: > 0 } && aumid is { } withPath && withPath.Contains('\\'))
+            {
+                string relative = withPath[(withPath.IndexOf('\\') + 1)..];
+                foreach (var root in new[] { Environment.SystemDirectory, Environment.GetFolderPath(Environment.SpecialFolder.Windows) })
+                {
+                    try
+                    {
+                        string candidate = Path.Combine(root, relative);
+                        if (File.Exists(candidate)) { s.ExePath = candidate; break; }
+                    }
+                    catch { /* a path Windows would not accept */ }
+                }
+                if (s.ExePath == null)
+                {
+                    try { if (File.Exists(relative)) s.ExePath = Path.GetFullPath(relative); } catch { /* not a path */ }
+                }
+            }
             if (s.ExePath is { Length: > 0 } path)
             {
                 s.Logo ??= IconOf(path);
