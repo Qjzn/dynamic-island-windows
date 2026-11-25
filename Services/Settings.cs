@@ -222,9 +222,9 @@ public sealed class Settings
     public bool HideInFullscreen { get; set; } = true;
     /// <summary>Verjot: the folder of the notes ("速记") and the meetings; "" = Documents\Verjot.</summary>
     /// <summary>Verjot chat: the Hermes endpoint (OpenAI-compatible chat completions) and its key.</summary>
-    public string HermesUrl { get; set; } = "";
+    public string HermesUrl { get; set; } = "http://127.0.0.1:8642/v1/chat/completions";
     public string HermesKey { get; set; } = "";
-    public string HermesModel { get; set; } = "";
+    public string HermesModel { get; set; } = "hermes-agent";
     public string VerjotFolder { get; set; } = "";
     /// <summary>Attached to the top edge of the screen like a notch (true) or floating pill (false).</summary>
     public bool Docked { get; set; }
