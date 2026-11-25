@@ -268,7 +268,7 @@ public partial class MainWindow
     /// </summary>
     private void BringUp(Notice n)
     {
-        _alerts.MarkRead(n);
+        _alerts.MarkSenderRead(n.Sender);
         string? how = null;
         try
         {
@@ -411,6 +411,13 @@ public partial class MainWindow
     {
         _alerts.Clear(_alertFilter);
         if (_mode == Mode.Expanded && TabNotify.IsChecked == true) RenderAlerts();
+    }
+
+    /// <summary>The unread badge in the pill: open the Alerts page.</summary>
+    private void UnreadBadge_Click(object sender, MouseButtonEventArgs e)
+    {
+        e.Handled = true;
+        OpenTab(TabNotify);
     }
 
     private void NotifyStatus_Click(object sender, MouseButtonEventArgs e) =>

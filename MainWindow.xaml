@@ -151,7 +151,7 @@
             <!-- who uses the mic / camera right now (like the iOS dots) -->
             <Ellipse x:Name="MicDot" Width="7" Height="7" Fill="#FF9F0A" Margin="0,0,5,0" Visibility="Collapsed"/>
             <Ellipse x:Name="CamDot" Width="7" Height="7" Fill="#30D158" Margin="0,0,5,0" Visibility="Collapsed"/>
-            <Border x:Name="UnreadBadge" Background="{DynamicResource AccentBlue}" CornerRadius="8" Padding="6,1"
+            <Border x:Name="UnreadBadge" Background="{DynamicResource AccentBlue}" CornerRadius="8" Padding="6,1" Cursor="Hand" MouseLeftButtonUp="UnreadBadge_Click"
                     Margin="0,0,6,0" Visibility="Collapsed">
               <TextBlock x:Name="UnreadText" FontSize="10.5" FontWeight="SemiBold" Foreground="White"/>
             </Border>

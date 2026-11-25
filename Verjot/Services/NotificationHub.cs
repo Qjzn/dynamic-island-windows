@@ -63,6 +63,19 @@ public sealed class NotificationHub
         Changed?.Invoke();
     }
 
+    /// <summary>
+    /// A program was opened through one of its notices: its whole pile counts as read (like on the phone, where
+    /// tapping the badge clears it). "Same sender" = same kind (微信 / 企业微信 / …) and the same name.
+    /// </summary>
+    public void MarkSenderRead(Sender sender)
+    {
+        bool any = false;
+        lock (_items)
+            foreach (var n in _items)
+                if (!n.Read && n.Sender.Source == sender.Source && n.Sender.Name == sender.Name) { n.Read = true; any = true; }
+        if (any) Changed?.Invoke();
+    }
+
     public void MarkAllRead()
     {
         bool any = false;
