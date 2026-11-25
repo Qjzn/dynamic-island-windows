@@ -99,7 +99,7 @@ Verjot/
 ## 还没做的
 
 - 微信、企业微信的**正文**（见上）。可行的下一步是对它们自己的弹窗做截图 OCR，需要真实消息来调。
-- 原版 Verjot 的便签编辑器（RichEdit、贴边标签、图片粘贴）**还没移植**（已排期）：现在“打开便签”按钮先用系统默认编辑器打开当天的 Markdown 文件；速记页仍是纯文本列表。这是下一个要做的。
+- ✅ 原版便签编辑器已完整移植（2026-11-25 傍晚）：`Verjot/StickyNote/`（QuickNoteWindow + NativeNoteDocument + QuickNoteStore + 桌面 UI 辅助，约 4800 行）。富文本、贴图（图片存 `速记/图片/`）、草稿恢复、多便签标签、贴边都和原版一致；`Ctrl+Alt+J`、首页“打开便签”、通知页入口都指向它。存储与岛内速记页是同一个文件夹（`Documents\Verjot\速记\`），草稿和窗口状态在 `%APPDATA%\Verjot\work\quick-note\`。JSON 状态文件从 JavaScriptSerializer 换成 System.Text.Json（格式只和自己兼容）。
 - 聊天对接 Hermes 已完成岛内一侧；Hermes 侧启用 api_server 后即可用。流式输出（打字机效果）还没做。
 - 转写 API 没有移植。
 - 没有安装包，没有发布配置，Release 版没跑过。

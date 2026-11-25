@@ -262,16 +262,29 @@ public partial class MainWindow
 
     private void HomeMeeting_Click(object sender, RoutedEventArgs e) => OpenTab(TabMeeting);
 
-    /// <summary>Opens the sticky note editor; for now, today's note file in the default editor.</summary>
+    VerjotNotes.QuickNoteWindow? _sticky;
+
+    /// <summary>The original Verjot sticky note: rich text, images, pinned window over today's folder.</summary>
     internal void OpenStickyNote()
     {
         try
         {
-            string file = VerjotFiles.TodayFile;
-            if (!File.Exists(file)) { Directory.CreateDirectory(Path.GetDirectoryName(file)!); File.WriteAllText(file, ""); }
-            Process.Start(new ProcessStartInfo(file) { UseShellExecute = true });
+            if (_sticky == null || _sticky.IsDisposed)
+            {
+                // drafts and window state live in the app data (the store refuses a recovery
+                // folder inside the note library — a crash there must not eat the vault)
+                string work = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                    "Verjot", "work", "quick-note");
+                var store = new VerjotNotes.QuickNoteStore(VerjotFiles.Root, "速记", work);
+                _sticky = new VerjotNotes.QuickNoteWindow(store, work);
+            }
+            _sticky.Toggle();
         }
-        catch (Exception ex) { Log.Write("notes: open: " + ex.GetType().Name + ": " + ex.Message); }
+        catch (Exception ex)
+        {
+            Log.Write("sticky: " + ex.GetType().Name + ": " + ex.Message);
+            ShowToast("", V.T("便签打开失败", "Could not open the note"), ex.Message, ms: 5000);
+        }
     }
 
     /// <summary>Enter on the home box saves the note, like on the notes page.</summary>

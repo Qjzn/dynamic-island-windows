@@ -185,6 +185,12 @@ public partial class MainWindow : Window
                     Application.Current.Shutdown();
                     return;
                 }
+                if (action == "stickynote")
+                {
+                    await StickyCheckAsync(args.ElementAtOrDefault(r + 2) ?? System.IO.Path.GetTempPath());
+                    Application.Current.Shutdown();
+                    return;
+                }
                 if (action == "verjotshots")
                 {
                     await VerjotShotsAsync(args.ElementAtOrDefault(r + 2) ?? System.IO.Path.GetTempPath());

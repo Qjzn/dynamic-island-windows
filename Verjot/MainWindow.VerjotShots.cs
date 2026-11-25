@@ -16,7 +16,39 @@ namespace DynamicIsland;
 /// </summary>
 public partial class MainWindow
 {
-    private async Task VerjotShotsAsync(string dir)
+        /// <summary>Test run <c>--run stickynote &lt;dir&gt;</c>: opens the original sticky note and captures it.</summary>
+    private async Task StickyCheckAsync(string dir)
+    {
+        Directory.CreateDirectory(dir);
+        var log = new List<string>();
+        try
+        {
+            Settings.ReadOnly = true;
+            [System.Runtime.InteropServices.DllImport("user32.dll")]
+            static extern bool PrintWindow(IntPtr hwnd, IntPtr dc, uint flags);
+
+            OpenStickyNote();
+            await Task.Delay(2500);
+            bool visible = _sticky != null && !_sticky.IsDisposed && _sticky.Visible;
+            var b2 = _sticky != null ? _sticky.Bounds : System.Drawing.Rectangle.Empty;
+            log.Add($"sticky visible={visible} bounds={b2}");
+            if (visible && b2.Width > 0)
+            {
+                using var bmp = new System.Drawing.Bitmap(b2.Width, b2.Height);
+                using (var g = System.Drawing.Graphics.FromImage(bmp))
+                {
+                    var hdc = g.GetHdc();
+                    PrintWindow(_sticky.Handle, hdc, 2);   // PW_RENDERFULLCONTENT: the window's own picture
+                    g.ReleaseHdc(hdc);
+                }
+                bmp.Save(Path.Combine(dir, "sticky.png"), System.Drawing.Imaging.ImageFormat.Png);
+            }
+        }
+        catch (Exception ex) { log.Add("FAILED: " + ex); }
+        File.WriteAllLines(Path.Combine(dir, "sticky.txt"), log);
+    }
+
+private async Task VerjotShotsAsync(string dir)
     {
         Directory.CreateDirectory(dir);
         Settings.ReadOnly = true;

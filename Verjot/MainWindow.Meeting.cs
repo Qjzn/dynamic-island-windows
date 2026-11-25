@@ -105,14 +105,8 @@ public partial class MainWindow
         RenderMeeting();
     }
 
-    /// <summary>Ctrl+Alt+J: the quick note. On the note already: it closes, as the Verjot sticky note does.</summary>
-    private void QuickNote()
-    {
-        if (_mode == Mode.Expanded && TabNotes.IsChecked == true) { _pinnedOpen = false; SetMode(Mode.Compact); return; }
-        if (_hidden) ShowIsland();
-        OpenTab(TabNotes);
-        Dispatcher.BeginInvoke(() => { try { NewNoteBox.Focus(); Keyboard.Focus(NewNoteBox); } catch { /* the page went away */ } }, DispatcherPriority.Input);
-    }
+    /// <summary>Ctrl+Alt+J: the sticky note (the original Verjot editor — rich text and images).</summary>
+    private void QuickNote() => OpenStickyNote();
 
     private async void MeetingStart_Click(object sender, RoutedEventArgs e) => await ToggleMeeting();
 
