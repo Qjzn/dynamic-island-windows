@@ -23,7 +23,6 @@ public partial class MainWindow
     private NoticeSource? _alertFilter;
     private bool _alertsBusy;
     private long _alertIds;
-    private DateTime _alertsOpenedAt;
     private readonly Dictionary<string, DateTime> _blinkAt = [];
 
     // notices waiting for the folded pill
@@ -59,8 +58,7 @@ public partial class MainWindow
         NotifyFilterWeCom.Content = V.T("企业微信", "WeCom");
         NotifyFilterSystem.Content = V.T("系统", "System");
         NotifyFilterOther.Content = V.T("其他", "Other");
-        NotifyReadAll.Content = V.T("全部已读", "Read all");
-        NotifyClear.Content = V.T("清空", "Clear");
+        NotifyClear.Content = V.T("一键已读清除", "Read & clear");
         NotifyFootnote.Text = V.T("微信和企业微信不发系统通知：它们来消息时，岛上只提示“有新消息”，点一下回到应用。",
             "WeChat and WeCom send no system toasts: when a message comes, the island only says so — a click takes you to the app.");
         NotifyList.Open += BringUp;
@@ -150,7 +148,6 @@ public partial class MainWindow
     /// <summary>The page is shown: the list as it is now.</summary>
     private void OpenAlertsPage()
     {
-        _alertsOpenedAt = DateTime.Now;
         RenderAlerts();
         RefreshAlertStatus();
     }
@@ -196,8 +193,6 @@ public partial class MainWindow
         _unread = _alerts.Unread;
         PumpAlerts();
         // the page has been open for a moment: its notices have been seen
-        if (_mode == Mode.Expanded && TabNotify.IsChecked == true && _alerts.Unread > 0 && DateTime.Now - _alertsOpenedAt > TimeSpan.FromSeconds(4))
-            _alerts.MarkAllRead();
         UpdateMeetingLive();
     }
 
@@ -221,7 +216,7 @@ public partial class MainWindow
         else { title = n.Title; text = n.Body; }
 
         _alertShownAt = DateTime.Now;
-        int ms = _alertQueue.Count > 0 ? 3800 : 5200;   // more are waiting: a little shorter
+        int ms = _alertQueue.Count > 0 ? 6000 : 10000;   // unread notices wait; hovered ones do not close at all
         ShowToast(glyph, title, text.Length == 0 ? null : text, () => BringUp(n), badge, ms: ms, keep: false);
 
         // who sent it (the tag says which kind, when the name alone doesn't)
@@ -405,7 +400,6 @@ public partial class MainWindow
         if (_mode == Mode.Expanded && TabNotify.IsChecked == true) RenderAlerts();
     }
 
-    private void NotifyReadAll_Click(object sender, RoutedEventArgs e) => _alerts.MarkAllRead();
 
     private void NotifyClear_Click(object sender, RoutedEventArgs e)
     {

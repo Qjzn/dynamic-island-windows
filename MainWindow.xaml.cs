@@ -996,8 +996,8 @@ public partial class MainWindow : Window
         Unsquish(1.6);
         // easter egg: poking a character shows one of seven emotions
         if (TryEmote(e)) return;
-        // plain click on the compact pill opens it
-        if (_mode == Mode.Compact && !_editMode) OpenSmart();
+        // plain click on the compact pill opens it — and keeps it open (a hover only peeks)
+        if (_mode == Mode.Compact && !_editMode) { _pinnedOpen = true; OpenSmart(); }
     }
 
     // ================================================================ hide / show

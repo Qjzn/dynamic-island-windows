@@ -346,7 +346,6 @@
                   </StackPanel>
                 </Border>
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                  <Button x:Name="NotifyReadAll" Style="{StaticResource GhostPill}" Click="NotifyReadAll_Click"/>
                   <Button x:Name="NotifyClear" Style="{StaticResource GhostPill}" Margin="4,0,0,0" Click="NotifyClear_Click"/>
                 </StackPanel>
               </DockPanel>
