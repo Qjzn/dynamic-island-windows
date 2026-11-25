@@ -67,7 +67,18 @@ public partial class MainWindow
                 else if (Clipboard.ContainsImage())
                 {
                     var img = Clipboard.GetImage();
-                    if (img != null) { img.Freeze(); item = new ClipItem(null, img, null, DateTime.Now); }
+                    if (img != null)
+                    {
+                        if (img.PixelWidth > 800)
+                        {
+                            double k = 800.0 / img.PixelWidth;
+                            var scaled = new System.Windows.Media.Imaging.TransformedBitmap(img, new System.Windows.Media.ScaleTransform(k, k));
+                            scaled.Freeze();
+                            img = scaled;   // the history holds a preview; the full picture stays in the clipboard
+                        }
+                        else img.Freeze();
+                        item = new ClipItem(null, img, null, DateTime.Now);
+                    }
                 }
                 else if (Clipboard.ContainsFileDropList())
                 {

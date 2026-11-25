@@ -52,6 +52,17 @@ public partial class MainWindow : Window
     private int _tickCount;
 
     private Forms.NotifyIcon? _tray;
+    [System.Runtime.InteropServices.DllImport("kernel32.dll")]
+    private static extern bool SetProcessWorkingSetSize(IntPtr process, IntPtr min, IntPtr max);
+
+    /// <summary>Pages out everything the island is not using right now (the task manager shows much less;
+    /// touched pages fault back in on demand, so nothing is lost).</summary>
+    private void TrimWorkingSet()
+    {
+        try { SetProcessWorkingSetSize(System.Diagnostics.Process.GetCurrentProcess().Handle, new IntPtr(-1), new IntPtr(-1)); }
+        catch { /* nothing to trim */ }
+    }
+
     private bool MenuGlass => !Lite && !Motion.NoTransparency;
 
     private bool NoClickOutside;   // test runs: a click anywhere must not fold the island

@@ -1,11 +1,16 @@
 using System.Diagnostics;
 using System.IO;
 using System.Windows;
+using System.Runtime.InteropServices;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
 namespace DynamicIsland.Services;
+
+internal static class SenderResolverNative {
+    [DllImport("gdi32.dll")] internal static extern bool DeleteObject(IntPtr h);
+}
 
 public enum NoticeSource { WeChat, WeCom, System, Other }
 
@@ -143,9 +148,14 @@ internal static class SenderResolver
             using var icon = System.Drawing.Icon.ExtractAssociatedIcon(path);
             if (icon == null) return null;
             using var bitmap = icon.ToBitmap();
-            var source = Imaging.CreateBitmapSourceFromHBitmap(bitmap.GetHbitmap(), IntPtr.Zero, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
-            source.Freeze();
-            return source;
+            var h = bitmap.GetHbitmap();
+            try
+            {
+                var source = Imaging.CreateBitmapSourceFromHBitmap(h, IntPtr.Zero, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
+                source.Freeze();
+                return source;
+            }
+            finally { SenderResolverNative.DeleteObject(h); }
         }
         catch { return null; }
     }
