@@ -42,8 +42,8 @@ public partial class MainWindow
                 {
                     var b = ms.ToArray();
                     if (BitConverter.ToInt32(b, 0) == 0) return true;
-                }
-            }
+    }
+}
         }
         catch { /* clipboard busy: the copy is read (or skipped) as usual */ }
         return false;
@@ -83,7 +83,7 @@ public partial class MainWindow
         if (item.Text != null) _clips.RemoveAll(c => c.Text == item.Text); // copying again moves it up
         _clips.Insert(0, item);
         if (_clips.Count > 30) _clips.RemoveRange(30, _clips.Count - 30);
-        if (_mode == Mode.Expanded && TabClip.IsChecked == true) RenderClipboard();
+        if (_mode == Mode.Expanded && TabClip.IsChecked == true) { ClipTitle.Text = V.T("最近复制的内容", "Recent clips"); RenderClipboard(); }
     }
 
     private void RenderClipSection() => RenderClipboard();
@@ -238,33 +238,9 @@ public partial class MainWindow
     // ================================================================ home page (Verjot)
 
     /// <summary>The home page's meeting card and quick note. Called when the page shows and from the tick.</summary>
-    private void InitHome() => RenderHome();
-
-    private void RenderHome()
-    {
-        bool recording = _meeting.IsRecording;
-        HomeMeetTime.Text = Clock(_meeting.Elapsed);
-        double level = Math.Sqrt(Math.Clamp(Math.Max(_meeting.MicLevel, _meeting.SystemLevel), 0, 1));
-        HomeMeetRing.Data = recording ? RingGeometry(64, 5, 0.04 + level * 0.96) : null;
-        HomeMeetRing.SetResourceReference(System.Windows.Shapes.Shape.StrokeProperty, recording ? "Danger" : "Accent");
-        HomeMeetTitle.Text = recording
-            ? (_meeting.MicrophoneOff ? V.T("录音中 · 麦克风已关", "Recording · microphone off") : V.T("录音中", "Recording"))
-            : V.T("会议录音", "Meeting recording");
-        HomeMeetInfo.Text = recording
-            ? V.T("结束后自动混成一条 MP3。", "One MP3 at the end.")
-            : V.T("收录麦克风和电脑声音。", "Microphone and computer sound together.");
-        HomeMeetButton.Content = recording ? V.T("结束", "End") : V.T("开始", "Start");
-        HomeMeetButton.Style = (Style)FindResource(recording ? "DangerPill" : "AccentPill");
-        HomeNoteOpen.Content = V.T("打开便签", "Open sticky note");
-        HomeNoteGo.Content = V.T("速记页", "Notes page");
-        HomeNoticesTitle.Text = V.T("刚刚的通知", "Recent notices");
-    }
-
-    private void HomeMeeting_Click(object sender, RoutedEventArgs e) => OpenTab(TabMeeting);
-
+/// <summary>The original Verjot sticky note: rich text, images, pinned window over today's folder.</summary>
     VerjotNotes.QuickNoteWindow? _sticky;
 
-    /// <summary>The original Verjot sticky note: rich text, images, pinned window over today's folder.</summary>
     internal void OpenStickyNote()
     {
         try
@@ -287,21 +263,4 @@ public partial class MainWindow
         }
     }
 
-    /// <summary>Enter on the home box saves the note, like on the notes page.</summary>
-    private void HomeNoteBox_KeyDown(object sender, KeyEventArgs e)
-    {
-        if (e.Key != Key.Enter) return;
-        if (Keyboard.Modifiers.HasFlag(ModifierKeys.Shift)) return;
-        var text = HomeNoteBox.Text.Trim();
-        e.Handled = true;
-        if (text.Length == 0) return;
-        NotesStore.Notes.Insert(0, new Note { Text = text });
-        NotesStore.Save();
-        HomeNoteBox.Clear();
-        ShowToast("\uE70B", V.T("已记下", "Kept"), V.T("今天的速记里", "in today's notes"), ms: 2200);
-    }
-
-    private void HomeNoteOpen_Click(object sender, RoutedEventArgs e) => OpenStickyNote();
-
-    private void HomeNoteGo_Click(object sender, RoutedEventArgs e) => OpenTab(TabNotes);
 }

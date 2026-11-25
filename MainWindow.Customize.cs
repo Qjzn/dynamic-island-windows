@@ -175,22 +175,25 @@ public partial class MainWindow
     // ================================================================ tabs: order and which ones are shown
 
     private static readonly string[] DefaultTabOrder =
-        ["TabHome", "TabNotify", "TabMeeting", "TabChat", "TabNotes", "TabClip", "TabSettings"];
-
-    private RadioButton[] AllPageTabs => [TabHome, TabNotify, TabMeeting, TabChat, TabNotes, TabClip];
+        ["TabNotify", "TabMeeting", "TabChat", "TabNotes", "TabClip", "TabSettings"];
 
     private RadioButton[]? _pageTabs;
 
     /// <summary>The page tabs the way the user arranged them (hidden ones left out).</summary>
-    private RadioButton[] PageTabs => _pageTabs ??= OrderedTabs().Where(t => !_settings.HiddenTabs.Contains(t.Name) || t == TabHome).ToArray();
+    private RadioButton[] PageTabs => _pageTabs ??= OrderedTabs().Where(t => !_settings.HiddenTabs.Contains(t.Name)).ToArray();
+
+    private RadioButton[] AllPageTabs => [ TabNotify, TabMeeting, TabChat, TabNotes, TabClip];
+
+
+    /// <summary>The page tabs the way the user arranged them (hidden ones left out).</summary>
 
     private List<RadioButton> OrderedTabs()
     {
         var all = AllPageTabs;
-        var order = _settings.TabOrder.Where(n => all.Any(t => t.Name == n)).Distinct().ToList();
+        var order = _settings.TabOrder.Where(n => all.Any(t => t != null && t.Name == n)).Distinct().ToList();
         order.AddRange(DefaultTabOrder.Where(n => !order.Contains(n)));
         // a saved order can name a page that is gone (an update removed it): those are just skipped
-        return order.Select(n => all.FirstOrDefault(t => t.Name == n)).Where(t => t != null!).ToList();
+        return order.Select(n => all.FirstOrDefault(t => t != null && t.Name == n)).Where(t => t != null!).ToList();
     }
 
     private void ApplyTabLayout()
@@ -203,7 +206,6 @@ public partial class MainWindow
             TabStrip.Children.Add(t);
             t.Visibility = PageTabs.Contains(t) ? Visibility.Visible : Visibility.Collapsed;
         }
-        if (PageTabs.All(t => t.IsChecked != true) && TabSettings.IsChecked != true) TabHome.IsChecked = true;
         DotsRow.Children.Clear();
         UpdatePageDots();
         // new dots come up visible: put them (and the tabs shown again) in the state the strip is in
@@ -368,7 +370,7 @@ public partial class MainWindow
             widgets));
 
         // tabs
-        var tabs = OrderedTabs().Select(t => new StripItem(t.Name, (string)t.Content, !_settings.HiddenTabs.Contains(t.Name) || t == TabHome, t == TabHome));
+        var tabs = OrderedTabs().Select(t => new StripItem(t.Name, (string)t.Content, !_settings.HiddenTabs.Contains(t.Name)));
         host.Children.Add(Tile(L.T("ВКЛАДКИ"),
             Hint(L.T("Перетащите, чтобы поменять порядок. Нажмите, чтобы скрыть вкладку или вернуть её.")),
             ReorderStrip(tabs, state =>

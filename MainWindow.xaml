@@ -224,8 +224,7 @@
           <!-- one rubber pill under the chosen tab (Rubber dock): it stretches between tabs and can be dragged along them -->
           <v:RubberStack x:Name="TabStrip" Orientation="Horizontal" VerticalAlignment="Center" Rim="True" PillRadius="16">
             <v:RubberStack.RenderTransform><TranslateTransform x:Name="TabStripShift"/></v:RubberStack.RenderTransform>
-            <RadioButton x:Name="TabHome" Style="{StaticResource TabButton}" GroupName="Tabs" Content="Главная" Tag="&#xE80F;" IsChecked="True" Checked="Tab_Checked"/>
-            <RadioButton x:Name="TabNotify" Style="{StaticResource TabButton}" GroupName="Tabs" Content="Уведомления" Tag="&#xE7E7;" Checked="Tab_Checked"/>
+            <RadioButton x:Name="TabNotify" Style="{StaticResource TabButton}" GroupName="Tabs" IsChecked="True" Content="Уведомления" Tag="&#xE7E7;" Checked="Tab_Checked"/>
             <RadioButton x:Name="TabMeeting" Style="{StaticResource TabButton}" GroupName="Tabs" Content="Встречи" Tag="&#xE720;" Checked="Tab_Checked"/>
             <RadioButton x:Name="TabChat" Style="{StaticResource TabButton}" GroupName="Tabs" Content="Чат" Tag="&#xE8BD;" Checked="Tab_Checked"/>
             <RadioButton x:Name="TabClip" Style="{StaticResource TabButton}" GroupName="Tabs" Content="Буфер" Tag="&#xE77F;" Checked="Tab_Checked"/>
@@ -247,51 +246,6 @@
           </StackPanel>
 
           <Grid Grid.Row="1" Margin="0,10,0,0" x:Name="Pages">
-
-            <!-- ======== HOME (Verjot): the meeting, a quick note, the latest notices ======== -->
-            <StackPanel x:Name="HomePage" Width="572">
-              <Border Style="{StaticResource Tile}" Padding="14,12" Margin="4,0,4,8" Cursor="Hand"
-                      MouseLeftButtonUp="HomeMeeting_Click">
-                <Grid>
-                  <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                  </Grid.ColumnDefinitions>
-                  <Grid Width="64" Height="64" VerticalAlignment="Center">
-                    <Ellipse Stroke="{DynamicResource TrackBg}" StrokeThickness="5"/>
-                    <Path x:Name="HomeMeetRing" Stroke="{DynamicResource Accent}" StrokeThickness="5"
-                          StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
-                    <TextBlock x:Name="HomeMeetTime" Text="00:00" FontSize="15" FontFamily="{StaticResource DisplayFont}"
-                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                  </Grid>
-                  <StackPanel Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center">
-                    <TextBlock x:Name="HomeMeetTitle" FontSize="13.5" FontWeight="SemiBold"/>
-                    <TextBlock x:Name="HomeMeetInfo" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,2,0,0"/>
-                  </StackPanel>
-                  <Button x:Name="HomeMeetButton" Grid.Column="2" Style="{StaticResource AccentPill}" VerticalAlignment="Center"
-                          Click="MeetingStart_Click"/>
-                </Grid>
-              </Border>
-              <Grid Margin="4,0,4,8">
-                <Grid.ColumnDefinitions>
-                  <ColumnDefinition Width="*"/>
-                  <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-                <TextBox x:Name="HomeNoteBox" Style="{StaticResource SoftBox}" MinHeight="36" MaxHeight="96" AcceptsReturn="True"
-                         TextWrapping="Wrap" VerticalScrollBarVisibility="Hidden" PreviewKeyDown="HomeNoteBox_KeyDown"
-                         MaxLength="100000"/>
-                <StackPanel Grid.Column="1" Margin="6,0,0,0" VerticalAlignment="Top">
-                  <Button x:Name="HomeNoteOpen" Style="{StaticResource GhostPill}" Padding="10,7" FontSize="11.5"
-                          Click="HomeNoteOpen_Click"/>
-                  <Button x:Name="HomeNoteGo" Style="{StaticResource GhostPill}" Padding="10,7" FontSize="11.5" Margin="0,4,0,0"
-                          Click="HomeNoteGo_Click"/>
-                </StackPanel>
-              </Grid>
-              <TextBlock x:Name="HomeNoticesTitle" Style="{StaticResource Caption}" Margin="4,2,0,0"/>
-              <v:NotificationStack x:Name="HomeMissed" Margin="4,8,4,0"/>
-            </StackPanel>
-
 
             <!-- ======== CHAT (Verjot): the user's Hermes agent ======== -->
             <StackPanel x:Name="HermesPage" Width="580" Visibility="Collapsed">
@@ -397,12 +351,11 @@
 
             <!-- ======== CLIPBOARD: history / shelf / text tools ======== -->
             <StackPanel x:Name="ClipPage" Width="600" Visibility="Collapsed">
+              <DockPanel Margin="0,0,0,8">
+                <TextBlock x:Name="ClipTitle" Style="{StaticResource Caption}" VerticalAlignment="Center"/>
+                <Button Style="{StaticResource GhostPill}" Content="Очистить" HorizontalAlignment="Right" Padding="12,5" Click="ClipClear_Click"/>
+              </DockPanel>
               <DockPanel Margin="0,0,0,10">
-                <Border Background="{DynamicResource TileBg}" CornerRadius="14" Padding="3" HorizontalAlignment="Left">
-                  <StackPanel Orientation="Horizontal">
-                    <RadioButton x:Name="ClipSegHistory" Style="{StaticResource Segment}" GroupName="ClipSeg" Content="История" IsChecked="True" Checked="ClipSeg_Checked"/>
-                  </StackPanel>
-                </Border>
                 <Button Style="{StaticResource GhostPill}" Content="Очистить" HorizontalAlignment="Right" Padding="12,5" Click="ClipClear_Click"/>
               </DockPanel>
 
@@ -434,27 +387,15 @@
             </StackPanel>
 
             <!-- ======== SETTINGS: sidebar + one section at a time ======== -->
-            <Grid x:Name="SettingsPage" Width="660" Height="430" Visibility="Collapsed">
+            <Grid x:Name="SettingsPage" Width="600" Visibility="Collapsed">
               <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="150"/>
                 <ColumnDefinition Width="*"/>
               </Grid.ColumnDefinitions>
-              <DockPanel>
-                <DockPanel DockPanel.Dock="Bottom" LastChildFill="False">
-                  <Button DockPanel.Dock="Left" Style="{StaticResource GhostPill}" Foreground="#FF6961" Content="Выйти" Click="Exit_Click"/>
-                  <Button x:Name="DonateButton" DockPanel.Dock="Right" Style="{StaticResource GhostPill}" Padding="10,6" Visibility="Collapsed"
-                          ToolTip="Поддержать разработку Atoll" Click="Donate_Click">
-                    <StackPanel Orientation="Horizontal">
-                      <TextBlock Text="&#xEB52;" FontFamily="{StaticResource IconFont}" FontSize="11" Foreground="#FF5C8A" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                      <TextBlock Text="Поддержать" VerticalAlignment="Center"/>
-                    </StackPanel>
-                  </Button>
-                </DockPanel>
-                <v:RubberStack x:Name="SettingsNav" PillRadius="12"/>
-              </DockPanel>
-              <ScrollViewer x:Name="SettingsScroll" Grid.Column="1" Margin="12,0,0,0" VerticalScrollBarVisibility="Hidden">
+              <ScrollViewer x:Name="SettingsScroll" Grid.Column="1" MaxHeight="380" Margin="0" VerticalScrollBarVisibility="Hidden">
                 <Grid x:Name="SettingsSections">
-                  <StackPanel Tag="Внешний вид|&#xE790;">
+<StackPanel>
+                    <TextBlock Style="{StaticResource Caption}" Text="Внешний вид" Margin="4,0,0,6"/>
                 <Border Style="{StaticResource Tile}" Margin="0,0,0,10">
                   <StackPanel>
                     <TextBlock Style="{StaticResource Caption}" Text="ТЕМЫ"/>
@@ -584,7 +525,8 @@
                   </StackPanel>
                 </Border>
                   </StackPanel>
-                  <StackPanel Tag="Персонаж|&#xE77B;" Visibility="Collapsed">
+<StackPanel>
+                    <TextBlock Style="{StaticResource Caption}" Text="Персонаж" Margin="4,0,0,6"/>
                 <Border Style="{StaticResource Tile}">
                   <WrapPanel x:Name="CharacterGallery"/>
                 </Border>
@@ -595,9 +537,11 @@
                   </StackPanel>
                 </Border>
                   </StackPanel>
-                  <StackPanel Tag="Главная|&#xE80F;" Visibility="Collapsed">
+<StackPanel>
+                    <TextBlock Style="{StaticResource Caption}" Text="Главная" Margin="4,0,0,6"/>
                   </StackPanel>
-                  <StackPanel Tag="Поведение|&#xE713;" Visibility="Collapsed">
+<StackPanel>
+                    <TextBlock Style="{StaticResource Caption}" Text="Поведение" Margin="4,0,0,6"/>
                 <Border Style="{StaticResource Tile}" Margin="0,0,0,10">
                   <DockPanel>
                     <ComboBox x:Name="LanguageBox" DockPanel.Dock="Right" Style="{StaticResource SoftCombo}" Width="250"
@@ -683,7 +627,8 @@
                   </StackPanel>
                 </Border>
                   </StackPanel>
-                  <StackPanel Tag="Раскладка|&#xE8A9;" Visibility="Collapsed">
+<StackPanel>
+                    <TextBlock Style="{StaticResource Caption}" Text="Раскладка" Margin="4,0,0,6"/>
                     <StackPanel x:Name="LayoutHost"/>
                   </StackPanel>
                 </Grid>

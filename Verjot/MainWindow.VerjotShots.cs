@@ -140,7 +140,7 @@ private async Task VerjotShotsAsync(string dir)
             SetMode(Mode.Compact);
             await Task.Delay(1000);
             Shot("9-pill-idle");
-            TabHome.IsChecked = true;
+            TabNotify.IsChecked = true;
             _pinnedOpen = true;
             Expand();
             await Task.Delay(1400);

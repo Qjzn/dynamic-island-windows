@@ -1,4 +1,4 @@
-﻿using System.Windows;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -70,7 +70,6 @@ public partial class MainWindow
         BuildLayoutPage();
         ApplyTabLayout();
         BuildCharacterGallery();
-        BuildSettingsNav();
         BuildAuraChips();
         RefreshSettingsPage();
     }
@@ -171,7 +170,6 @@ public partial class MainWindow
         }
         OpenHotkeyBox.SelectedIndex = Math.Max(0, Array.FindIndex(OpenHotkeys, h => h.Name == _settings.OpenHotkey) is int i && i >= 0 ? i : OpenHotkeys.Length);
         OpenHotkeyStatus.Text = L.T("Ещё раз — свернуть. Esc или клик мимо — тоже.");
-        DonateButton.Visibility = DonateUrl.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
         NotifySwitch.IsChecked = _settings.MirrorNotifications;
         RefreshNotifyHint();
         ColorBox.Text = _settings.IslandColor;

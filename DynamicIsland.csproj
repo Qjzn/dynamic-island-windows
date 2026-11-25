@@ -39,6 +39,8 @@
     <!-- the unit tests are a project of their own -->
 
     <Compile Remove="tests\**" />
+    <Page Remove="artifacts\**" />
+    <None Remove="artifacts\**" />
     <None Remove="tests\**" />
     <Page Remove="tests\**" />
   </ItemGroup>

@@ -60,7 +60,6 @@ public partial class MainWindow : Window
     public MainWindow(string[] args)
     {
         InitializeComponent();
-        HomeMissed.Resized += Remeasure;
         _shrinkTimer.Tick += (_, _) => ShrinkNow();
         // Esc folds the open island (when nothing inside used the key first, e.g. the app search)
         KeyDown += (_, e) =>
@@ -131,7 +130,6 @@ public partial class MainWindow : Window
         Safely("character", () => Character.Kind = _settings.Character);
         Safely("glass", InitGlass);
         Safely("shape", () => UpdateShape(false));
-        Safely("home", InitHome);
         Safely("settings page", InitSettingsPage);
         Safely("buddy", InitBuddyReactions);
         Safely("look", ApplyLook);
@@ -165,7 +163,7 @@ public partial class MainWindow : Window
                 var tab = args[i + 1] switch
                 {
                     "notify" => TabNotify, "meeting" => TabMeeting, "chat" => TabChat,
-                    "notes" => TabNotes, "clip" => TabClip, "settings" => TabSettings, _ => TabHome,
+                    "notes" => TabNotes, "clip" => TabClip, "settings" => TabSettings, _ => TabNotify,
                 };
                 tab.IsChecked = true;
             }
@@ -656,9 +654,9 @@ public partial class MainWindow : Window
         }
     }
 
-    private RadioButton[] Tabs => [TabHome, TabNotify, TabMeeting, TabChat, TabNotes, TabClip, TabSettings];
+    private RadioButton[] Tabs => [TabNotify, TabMeeting, TabChat, TabNotes, TabClip, TabSettings];
 
-    private FrameworkElement[] AllPages => [HomePage, NotifyPage, MeetingPage, HermesPage, ClipPage, NotesPage, SettingsPage];
+    private FrameworkElement[] AllPages => [NotifyPage, MeetingPage, HermesPage, ClipPage, NotesPage, SettingsPage];
 
     private FrameworkElement CurrentPage
     {
@@ -699,7 +697,6 @@ public partial class MainWindow : Window
     {
         var old = _mode;
         _mode = mode;
-        if (mode == Mode.Expanded && old != Mode.Expanded) HomeMissed.Refresh(fold: true);
 
         var views = new Dictionary<Mode, FrameworkElement>
         {
@@ -790,7 +787,7 @@ public partial class MainWindow : Window
 
     private void Tab_Checked(object sender, RoutedEventArgs e)
     {
-        if (HomePage == null || TabSettings == null) return; // during InitializeComponent
+        if (TabSettings == null) return; // during InitializeComponent
         int index = Array.IndexOf(PageTabs.Append(TabSettings).ToArray(), sender as RadioButton);   // in the order the user sees
         double slide = index > _tabIndex ? 26 : index < _tabIndex ? -26 : 0;
         _tabIndex = Math.Max(0, index);
@@ -811,8 +808,7 @@ public partial class MainWindow : Window
     /// <summary>Lazy work for the tab that just became visible.</summary>
     private void OnPageShown()
     {
-        if (TabHome.IsChecked == true) RenderHome();
-        else if (TabSettings.IsChecked == true) RefreshSettingsPage();
+        if (TabSettings.IsChecked == true) RefreshSettingsPage();
         else if (TabClip.IsChecked == true) RenderClipboard();
         else if (TabNotes.IsChecked == true) RenderNotes();
         else if (TabNotify.IsChecked == true) OpenAlertsPage();
@@ -1285,19 +1281,12 @@ public partial class MainWindow : Window
 
     private Action? _toastAction;
 
-    private Views.NotificationStack.Item? _toastKept;
     private Views.SideToast? _sideToast;
 
     /// <param name="keep">A notification (a message, Claude, a timer, a download…), not an answer to what the user just
     /// did: it also goes on the Home page's stack, shown or not.</param>
     public void ShowToast(string glyph, string title, string? text, Action? onClick = null, Brush? badge = null, int ms = 2600, bool keep = false)
     {
-        Views.NotificationStack.Item? kept = null;
-        if (keep)
-        {
-            kept = new(glyph, badge, title, text, DateTime.Now, onClick);
-            HomeMissed.Add(kept);
-        }
         if (_mode == Mode.Claude || _hidden) return;
         // the island is open: the notice goes beside it, the open island stays as it is (folding it for a notice
         // threw away what the user was doing there)
@@ -1306,18 +1295,12 @@ public partial class MainWindow : Window
             _sideToast ??= new Views.SideToast { HideFromCapture = HideFromCapture };
             var tl = Island.PointToScreen(new Point(0, 0));
             var br = Island.PointToScreen(new Point(Island.ActualWidth, Island.ActualHeight));
-            var kept2 = kept;
-            _sideToast.Show(new Rect(tl, br), glyph, badge, title, text, onClick == null && kept2 == null ? null : () =>
-            {
-                if (kept2 != null) HomeMissed.Forget(kept2);   // seen and acted on: not missed
-                onClick?.Invoke();
-            }, ms);
+            _sideToast.Show(new Rect(tl, br), glyph, badge, title, text, onClick, ms);
             Character.Cheer();
             MenuBuddy.Cheer();
             return;
         }
         ToastExtrasReset();
-        _toastKept = kept;
         ToastIcon.Text = glyph;
         ToastTitle.Text = title;
         ToastText.Text = text ?? "";
@@ -1340,8 +1323,6 @@ public partial class MainWindow : Window
         if (_justDragged) return;
         var a = _toastAction;
         _toastAction = null;
-        if (_toastKept != null) HomeMissed.Forget(_toastKept);   // seen and acted on: not missed
-        _toastKept = null;
         SetMode(Mode.Compact);
         if (a == null) return;
         try { a(); }

@@ -755,24 +755,6 @@ public partial class MainWindow
 
     // ================================================================ settings: sidebar, look controls
 
-    private void BuildSettingsNav()
-    {
-        bool first = true;
-        foreach (StackPanel section in SettingsSections.Children)
-        {
-            var parts = ((string)section.Tag).Split('|');
-            var nav = new RadioButton { Style = (Style)FindResource("SideNav"), GroupName = "SettingsNav", Content = parts[0], Tag = parts[1] };
-            var sec = section;
-            nav.Checked += (_, _) =>
-            {
-                foreach (UIElement s in SettingsSections.Children) s.Visibility = Visibility.Collapsed;
-                SettingsScroll.ScrollToTop();
-                Reveal(sec, 0.99, 0, 0);
-            };
-            SettingsNav.Children.Add(nav);
-            if (first) { nav.IsChecked = true; first = false; }
-        }
-    }
 
     private void BuildAuraChips()
     {
