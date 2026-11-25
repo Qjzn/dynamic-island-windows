@@ -395,7 +395,7 @@
               <ScrollViewer x:Name="SettingsScroll" Grid.Column="1" MaxHeight="380" Margin="0" VerticalScrollBarVisibility="Hidden">
                 <Grid x:Name="SettingsSections">
 <StackPanel>
-                    <TextBlock Style="{StaticResource Caption}" Text="Внешний вид" Margin="4,0,0,6"/>
+                    <TextBlock Style="{StaticResource Caption}" Text="外观与主题" Margin="4,0,0,6"/>
                 <Border Style="{StaticResource Tile}" Margin="0,0,0,10">
                   <StackPanel>
                     <TextBlock Style="{StaticResource Caption}" Text="ТЕМЫ"/>
@@ -503,10 +503,7 @@
                         </StackPanel>
                       </Border>
                     </DockPanel>
-                    <CheckBox x:Name="ReactiveSwitch" Style="{StaticResource Switch}" Click="Reactive_Click" Content="Живой отклик"/>
                     <CheckBox x:Name="LiquidSwitch" Style="{StaticResource Switch}" Click="Liquid_Click" Content="Живые волны"/>
-                    <CheckBox x:Name="MusicWavesSwitch" Style="{StaticResource Switch}" Click="Reactive_Click" Content="Волны от музыки"
-                              ToolTip="Край острова качается в такт музыке. Без этого волны остаются только от касаний"/>
 
                     <v:Scrubber x:Name="LiquidSlider" Minimum="10" Maximum="100" Step="1" Margin="0,0,0,6" Visibility="Collapsed"
                                 ValueChanged="LiquidSlider_ValueChanged"/>
@@ -526,22 +523,20 @@
                 </Border>
                   </StackPanel>
 <StackPanel>
-                    <TextBlock Style="{StaticResource Caption}" Text="Персонаж" Margin="4,0,0,6"/>
+                    <TextBlock Style="{StaticResource Caption}" Text="角色" Margin="4,0,0,6"/>
                 <Border Style="{StaticResource Tile}">
                   <WrapPanel x:Name="CharacterGallery"/>
                 </Border>
                 <Border Style="{StaticResource Tile}" Margin="0,10,0,0">
                   <StackPanel>
                     <CheckBox x:Name="HandDrawnSwitch" Style="{StaticResource Switch}" Click="HandDrawn_Click" Content="Нарисовано от руки (покадрово)"/>
-                    <CheckBox x:Name="ClaudeGlowSwitch" Style="{StaticResource Switch}" Click="ClaudeGlow_Click" Content="Оранжевая подсветка Claude"/>
                   </StackPanel>
                 </Border>
                   </StackPanel>
 <StackPanel>
-                    <TextBlock Style="{StaticResource Caption}" Text="Главная" Margin="4,0,0,6"/>
                   </StackPanel>
 <StackPanel>
-                    <TextBlock Style="{StaticResource Caption}" Text="Поведение" Margin="4,0,0,6"/>
+                    <TextBlock Style="{StaticResource Caption}" Text="行为" Margin="4,0,0,6"/>
                 <Border Style="{StaticResource Tile}" Margin="0,0,0,10">
                   <DockPanel>
                     <ComboBox x:Name="LanguageBox" DockPanel.Dock="Right" Style="{StaticResource SoftCombo}" Width="250"
@@ -613,8 +608,8 @@
                     <CheckBox x:Name="LiteSwitch" Style="{StaticResource Switch}" Click="Lite_Click" ToolTip="Без стекла, свечения и эффектов: заметно меньше нагрузка" Content="Облегчённая графика для слабых ПК"/>
                     <v:CopyButton x:Name="PerfReportButton" Style="{StaticResource GhostPill}" HorizontalAlignment="Left" Padding="12,6" Margin="0,0,0,10"
                             Click="CopyPerfReport_Click" ToolTip="Если остров дёргается — отправьте этот отчёт разработчику"/>
-                    <CheckBox x:Name="NotifySwitch" Style="{StaticResource Switch}" Click="Behavior_Click" Content="Сообщения Telegram, Discord, Viber… на острове"/>
-                    <CheckBox x:Name="NotifyAllSwitch" Style="{StaticResource Switch}" Click="Behavior_Click" Content="Уведомления всех приложений, не только мессенджеров"/>
+                    <CheckBox x:Name="NotifySwitch" Style="{StaticResource Switch}" Click="Behavior_Click" Content="在岛上显示应用通知"/>
+                    <CheckBox x:Name="NotifyAllSwitch" Style="{StaticResource Switch}" Click="Behavior_Click" Content="显示所有应用的通知（不只是聊天软件）"/>
                     <TextBlock x:Name="NotifyHint" Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,-4,0,8" Visibility="Collapsed"/>
                     <CheckBox x:Name="AutostartSwitch" Style="{StaticResource Switch}" Click="Autostart_Click" Content="Запускать вместе с Windows"/>
                     <Button Style="{StaticResource AccentPill}" HorizontalAlignment="Left" Margin="0,12,0,0" Padding="14,7"
@@ -628,7 +623,7 @@
                 </Border>
                   </StackPanel>
 <StackPanel>
-                    <TextBlock Style="{StaticResource Caption}" Text="Раскладка" Margin="4,0,0,6"/>
+                    <TextBlock Style="{StaticResource Caption}" Text="布局" Margin="4,0,0,6"/>
                     <StackPanel x:Name="LayoutHost"/>
                   </StackPanel>
                 </Grid>

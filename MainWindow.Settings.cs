@@ -114,13 +114,6 @@ public partial class MainWindow
         }
     }
 
-    private void Reactive_Click(object sender, RoutedEventArgs e)
-    {
-        _settings.Reactive = ReactiveSwitch.IsChecked == true;
-        _settings.MusicWaves = MusicWavesSwitch.IsChecked == true;
-        _settings.Save();
-        UpdateShape(false);
-    }
 
     private void HandDrawn_Click(object sender, RoutedEventArgs e)
     {
@@ -128,13 +121,6 @@ public partial class MainWindow
         _settings.Save();
     }
 
-    private void ClaudeGlow_Click(object sender, RoutedEventArgs e)
-    {
-        _settings.ClaudeGlow = ClaudeGlowSwitch.IsChecked == true;
-        _settings.Save();
-        _auraThinking = false;
-        SetupAura();
-    }
 
     private void RefreshSettingsPage()
     {
@@ -146,10 +132,7 @@ public partial class MainWindow
         LiquidSlider.Value = Math.Clamp(_settings.LiquidStrength, 10, 100);
         LiquidSlider.Visibility = _settings.LiquidWaves ? Visibility.Visible : Visibility.Collapsed;
         RefreshLookControls();
-        ReactiveSwitch.IsChecked = _settings.Reactive;
-        MusicWavesSwitch.IsChecked = _settings.MusicWaves;
 
-        ClaudeGlowSwitch.IsChecked = _settings.ClaudeGlow;
         HandDrawnSwitch.IsChecked = _settings.HandDrawn;
         LockSwitch.IsChecked = _settings.LockPosition;
         SmartSwitch.IsChecked = _settings.SmartIsland;
