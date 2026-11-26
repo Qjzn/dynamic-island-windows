@@ -1383,47 +1383,27 @@ public partial class MainWindow : Window
 
     // ================================================================ tray
 
-    private ContextMenu? _trayMenu;
-
     private void CreateTray()
     {
-        var iconStream = Application.GetResourceStream(new Uri("pack://application:,,,/Assets/icon.ico"))!.Stream;
+        using var iconStream = Application.GetResourceStream(new Uri("pack://application:,,,/Assets/icon.ico"))!.Stream;
         _tray = new Forms.NotifyIcon
         {
             Icon = new System.Drawing.Icon(iconStream, Forms.SystemInformation.SmallIconSize),
             Text = Settings.Safe ? "Verjot · " + L.T("безопасный режим") : "Verjot",
             Visible = true,
+            ContextMenuStrip = new Forms.ContextMenuStrip(),
         };
-        BuildTrayMenu();
-        _tray.MouseClick += (_, a) =>
-        {
-            if (a.Button == Forms.MouseButtons.Left) ToggleHidden();
-            else if (a.Button == Forms.MouseButtons.Right) { _trayMenu!.Placement = System.Windows.Controls.Primitives.PlacementMode.MousePoint; _trayMenu.IsOpen = true; }
-        };
+        // Verjot's three things come first
+        _tray.ContextMenuStrip.Items.Add(V.T("通知", "Alerts"), null, (_, _) => OpenTab(TabNotify));
+        _tray.ContextMenuStrip.Items.Add(V.T("会议录音  (Ctrl+Alt+L)", "Meeting recording  (Ctrl+Alt+L)"), null, (_, _) => _ = ToggleMeeting());
+        _tray.ContextMenuStrip.Items.Add(V.T("速记  (Ctrl+Alt+J)", "Quick note  (Ctrl+Alt+J)"), null, (_, _) => QuickNote());
+        _tray.ContextMenuStrip.Items.Add(new Forms.ToolStripSeparator());
+        _tray.ContextMenuStrip.Items.Add(L.T("Показать / спрятать  (Ctrl+Alt+I)"), null, (_, _) => ToggleHidden());
+        _tray.ContextMenuStrip.Items.Add(L.T("Выровнять по центру"), null, (_, _) => AlignIsland());
+        _tray.ContextMenuStrip.Items.Add(L.T("Сменить тему  (Ctrl+Alt+T)"), null, (_, _) => ToggleTheme());
+        _tray.ContextMenuStrip.Items.Add(L.T("Настройки"), null, (_, _) => OpenTab(TabSettings));
+        _tray.ContextMenuStrip.Items.Add(new Forms.ToolStripSeparator());
+        _tray.ContextMenuStrip.Items.Add(L.T("Выход"), null, (_, _) => Close());
+        _tray.MouseClick += (_, a) => { if (a.Button == Forms.MouseButtons.Left) ToggleHidden(); };
     }
-
-    /// <summary>The tray menu: the same island-styled WPF menu the island itself right-clicks with.</summary>
-    private void BuildTrayMenu()
-    {
-        var font = (FontFamily)FindResource("IconFont");
-        MenuItem Mi(string header, string glyph, Action click)
-        {
-            var mi = new MenuItem { Header = header, Icon = new TextBlock { Text = glyph, FontFamily = font, FontSize = 14 } };
-            mi.Click += (_, _) => { _trayMenu!.IsOpen = false; click(); };
-            return mi;
-        }
-        var menu = new ContextMenu { Placement = System.Windows.Controls.Primitives.PlacementMode.MousePoint };
-        menu.Items.Add(Mi(V.T("通知", "Alerts"), "\uE91C", () => OpenTab(TabNotify)));
-        menu.Items.Add(Mi(V.T("会议录音  (Ctrl+Alt+L)", "Meeting  (Ctrl+Alt+L)"), "\uE720", () => _ = ToggleMeeting()));
-        menu.Items.Add(Mi(V.T("速记  (Ctrl+Alt+J)", "Quick note  (Ctrl+Alt+J)"), "\uE70B", () => QuickNote()));
-        menu.Items.Add(new Separator());
-        menu.Items.Add(Mi(V.T("显示 / 隐藏  (Ctrl+Alt+I)", "Show / hide  (Ctrl+Alt+I)"), "\uE70E", () => ToggleHidden()));
-        menu.Items.Add(Mi(V.T("对齐屏幕顶部", "Align to the top"), "\uE8E3", () => AlignIsland()));
-        menu.Items.Add(Mi(V.T("切换主题  (Ctrl+Alt+T)", "Theme  (Ctrl+Alt+T)"), "\uE790", () => ToggleTheme()));
-        menu.Items.Add(Mi(V.T("设置", "Settings"), "\uE713", () => OpenTab(TabSettings)));
-        menu.Items.Add(new Separator());
-        menu.Items.Add(Mi(V.T("退出", "Exit"), "\uE7E8", () => Close()));
-        _trayMenu = menu;
-    }
-
 }
