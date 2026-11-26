@@ -215,7 +215,8 @@ public partial class MainWindow
 
         _alertShownAt = DateTime.Now;
         int ms = _alertQueue.Count > 0 ? 6000 : 10000;   // unread notices wait; hovered ones do not close at all
-        ShowToast(glyph, title, text.Length == 0 ? null : text, () => BringUp(n), badge, ms: ms, keep: false);
+        // a click on the preview does what a click on the card does: the program comes up and the notice leaves
+        ShowToast(glyph, title, text.Length == 0 ? null : text, () => { BringUp(n); _alerts.Remove(n); }, badge, ms: ms, keep: false);
 
         // who sent it (the tag says which kind, when the name alone doesn't)
         ToastAppRow.Visibility = Visibility.Visible;
