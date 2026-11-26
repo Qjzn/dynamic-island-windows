@@ -388,13 +388,14 @@
 
             <!-- ======== SETTINGS: sidebar + one section at a time ======== -->
             <Grid x:Name="SettingsPage" Width="600" Visibility="Collapsed">
-              <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="150"/>
-                <ColumnDefinition Width="*"/>
-              </Grid.ColumnDefinitions>
-              <ScrollViewer x:Name="SettingsScroll" Grid.Column="1" MaxHeight="380" Margin="0" VerticalScrollBarVisibility="Hidden">
+              <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+              </Grid.RowDefinitions>
+              <StackPanel x:Name="SettingsNavRow" Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8"/>
+              <ScrollViewer x:Name="SettingsScroll" Grid.Row="1" MaxHeight="380" Margin="0" VerticalScrollBarVisibility="Hidden">
                 <StackPanel x:Name="SettingsSections">
-<StackPanel>
+<StackPanel Tag="外观与主题">
                     <TextBlock Style="{StaticResource Caption}" Text="外观与主题" Margin="4,0,0,6"/>
                 <Border Style="{StaticResource Tile}" Margin="0,0,0,10">
                   <StackPanel>
@@ -522,7 +523,7 @@
                   </StackPanel>
                 </Border>
                   </StackPanel>
-<StackPanel>
+<StackPanel Tag="角色">
                     <TextBlock Style="{StaticResource Caption}" Text="角色" Margin="4,0,0,6"/>
                 <Border Style="{StaticResource Tile}">
                   <WrapPanel x:Name="CharacterGallery"/>
@@ -535,7 +536,7 @@
                   </StackPanel>
 <StackPanel>
                   </StackPanel>
-<StackPanel>
+<StackPanel Tag="行为">
                     <TextBlock Style="{StaticResource Caption}" Text="行为" Margin="4,0,0,6"/>
                 <Border Style="{StaticResource Tile}" Margin="0,0,0,10">
                   <DockPanel>
@@ -622,7 +623,7 @@
                   </StackPanel>
                 </Border>
                   </StackPanel>
-<StackPanel>
+<StackPanel Tag="布局">
                     <TextBlock Style="{StaticResource Caption}" Text="布局" Margin="4,0,0,6"/>
                     <StackPanel x:Name="LayoutHost"/>
                   </StackPanel>

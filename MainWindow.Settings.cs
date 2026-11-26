@@ -9,6 +9,29 @@ namespace DynamicIsland;
 /// <summary>Settings tab.</summary>
 public partial class MainWindow
 {
+
+    /// <summary>The section menu: one section at a time, chosen from the top row of chips.</summary>
+    private void BuildSectionNav()
+    {
+        SettingsNavRow.Children.Clear();
+        var first = true;
+        foreach (var section in SettingsSections.Children.OfType<System.Windows.Controls.StackPanel>())
+        {
+            var name = section.Tag as string ?? "";
+            if (name.Length == 0) continue;
+            var chip = new System.Windows.Controls.RadioButton { Style = (Style)FindResource("Segment"), GroupName = "SettingsNav", Content = name };
+            var sec = section;
+            chip.Checked += (_, _) =>
+            {
+                foreach (var s in SettingsSections.Children.OfType<System.Windows.Controls.StackPanel>())
+                    s.Visibility = s == sec ? Visibility.Visible : Visibility.Collapsed;
+                SettingsScroll.ScrollToTop();
+            };
+            SettingsNavRow.Children.Add(chip);
+            if (first) { chip.IsChecked = true; first = false; }
+        }
+    }
+
     private bool _settingsLoading;
 
     /// <summary>One row of the language list: its own name, and the English name as a hint.</summary>
@@ -53,6 +76,7 @@ public partial class MainWindow
 
     private void InitSettingsPage()
     {
+        BuildSectionNav();
         BuildLanguageList();
         BuildThemeGallery();
         foreach (var hex in Theme.Palette)

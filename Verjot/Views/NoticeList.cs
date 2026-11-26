@@ -22,7 +22,6 @@ public sealed class NoticeList : StackPanel
 
     private sealed class Row
     {
-        public bool Opened;   // the first click opened the program; the next click on the card dismisses it
         public required Notice Notice;
         public required Grid Root;
         public required Border Face;
@@ -349,8 +348,10 @@ public sealed class NoticeList : StackPanel
     {
         _drag = null;
         Touched?.Invoke();
+        // acting on the notice closes it, like a Windows toast: the program comes up and the card leaves
         if (!row.Notice.Read) { row.Notice.Read = true; Refresh(); }
         Open?.Invoke(row.Notice);
+        Leave(row, 1);
     }
 
     private void ToggleText(Row row)
