@@ -142,9 +142,7 @@
             <Ellipse x:Name="RecDot" Width="10" Height="10" Fill="{DynamicResource Danger}" Visibility="Collapsed"/>
           </StackPanel>
 
-          <TextBlock x:Name="CompactTime" Grid.Column="1" Text="00:00" FontSize="13" FontWeight="SemiBold"/>
-                     HorizontalAlignment="Center" VerticalAlignment="Center"
-                     MaxWidth="300" TextTrimming="CharacterEllipsis"/>
+          <TextBlock x:Name="CompactTime" Grid.Column="1" Text="00:00" FontSize="13" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="300" TextTrimming="CharacterEllipsis"/>
           <!-- karaoke: the line being sung, whole (the island sizes itself to it) -->
 
           <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="10,0,0,0">
@@ -548,8 +546,7 @@
                       <ComboBox.ItemTemplate>
                         <DataTemplate>
                           <DockPanel LastChildFill="True">
-                            <TextBlock DockPanel.Dock="Right" Text="{Binding Hint}" Foreground="{DynamicResource Fg2}" FontSize="11.5"/>
-                                       Margin="14,0,0,0" VerticalAlignment="Center"/>
+                            <TextBlock DockPanel.Dock="Right" Text="{Binding Hint}" Foreground="{DynamicResource Fg2}" FontSize="11.5" Margin="14,0,0,0" VerticalAlignment="Center"/>
                             <TextBlock Text="{Binding Name}" FontSize="13" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
                           </DockPanel>
                         </DataTemplate>
