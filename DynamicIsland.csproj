@@ -31,6 +31,9 @@
     <AppendPlatformToOutputPath>false</AppendPlatformToOutputPath>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="DynamicIsland.Tests" />
   </ItemGroup>
