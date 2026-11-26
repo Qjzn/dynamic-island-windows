@@ -1173,7 +1173,21 @@ public partial class MainWindow : Window
         // a game or a full-screen program is in front. Either switch needs to know it: "hide in full screen",
         // or "FPS and load in games" (the two exclude each other, so asking only when the first one is on
         // meant the game pill never appeared for anyone who chose FPS)
-        _fullscreenFront = _hwnd != IntPtr.Zero && (_testFullscreen ?? Native.IsFullscreenAppActive(_hwnd));   // also: the island steps aside for the cursor
+        // SHQueryUserNotificationState inside can stall for hundreds of ms on the shell — ask off the UI
+        // thread; the answer comes back as a plain state update (this was the hitch while moving)
+        var hwnd = _hwnd;
+        var test = _testFullscreen;
+        Task.Run(() =>
+        {
+            bool front = hwnd != IntPtr.Zero && (test ?? Native.IsFullscreenAppActive(hwnd));
+            Dispatcher.BeginInvoke(DispatcherPriority.Background, () => ApplyFullscreen(front, fg));
+        });
+    }
+
+    private void ApplyFullscreen(bool front, IntPtr fg)
+    {
+        if (_shutDown || _hwnd == IntPtr.Zero) return;
+        _fullscreenFront = _hwnd != IntPtr.Zero && front;   // also: the island steps aside for the cursor
         bool fullscreenApp = _settings.HideInFullscreen && _fullscreenFront;
         _gameFront = _fullscreenFront;
         bool fs = fullscreenApp || IsHiddenApp(fg);
