@@ -393,7 +393,7 @@
                 <ColumnDefinition Width="*"/>
               </Grid.ColumnDefinitions>
               <ScrollViewer x:Name="SettingsScroll" Grid.Column="1" MaxHeight="380" Margin="0" VerticalScrollBarVisibility="Hidden">
-                <Grid x:Name="SettingsSections">
+                <StackPanel x:Name="SettingsSections">
 <StackPanel>
                     <TextBlock Style="{StaticResource Caption}" Text="外观与主题" Margin="4,0,0,6"/>
                 <Border Style="{StaticResource Tile}" Margin="0,0,0,10">
@@ -626,7 +626,7 @@
                     <TextBlock Style="{StaticResource Caption}" Text="布局" Margin="4,0,0,6"/>
                     <StackPanel x:Name="LayoutHost"/>
                   </StackPanel>
-                </Grid>
+                </StackPanel>
               </ScrollViewer>
             </Grid>
           </Grid>

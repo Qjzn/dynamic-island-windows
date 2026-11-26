@@ -107,7 +107,7 @@ public partial class MainWindow : Window
         _gaze.Tick += (_, _) => Measure("gaze", UpdateGaze);
         _blink.Tick += (_, _) => Blink();
         // hover: not while typing (the cursor just happens to sit there), and on the tab that fits the moment
-        _expandDelay.Tick += (_, _) => { _expandDelay.Stop(); if (_mode == Mode.Compact && !_dragging && !Typing) OpenSmart(); };
+        _expandDelay.Tick += (_, _) => { _expandDelay.Stop(); if (_mode == Mode.Compact && !_dragging && (!Typing || _alerts.Unread > 0)) OpenSmart(); };
         _collapseDelay.Tick += (_, _) => { _collapseDelay.Stop(); TryCollapse(); };
         _toastTimer.Tick += (_, _) => { _toastTimer.Stop(); if (_mode == Mode.Toast && !Island.IsMouseOver) SetMode(Mode.Compact); };
         _watch.Tick += (_, _) => Measure("fullscreen watch", WatchFullscreen);

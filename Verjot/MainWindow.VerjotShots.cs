@@ -146,6 +146,11 @@ private async Task VerjotShotsAsync(string dir)
             await Task.Delay(1400);
             Shot("10-home");
             SetMode(Mode.Compact);
+            TabSettings.IsChecked = true;
+            Expand();
+            await Task.Delay(1600);
+            Shot("11-settings");
+            SetMode(Mode.Compact);
         }
         catch (Exception ex) { log.Add("FAILED: " + ex + "\n" + ex.StackTrace); }
         File.WriteAllLines(Path.Combine(dir, "verjot-shots.txt"), log);
