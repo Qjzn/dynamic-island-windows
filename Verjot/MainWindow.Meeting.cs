@@ -28,7 +28,7 @@ public partial class MainWindow
         TabMeeting.Content = V.T("会议", "Meetings");
         TabNotes.Content = V.T("速记", "Notes");
         MeetTitle.Text = V.T("会议录音", "Meeting recording");
-        MeetInfo.Text = V.T("同时收录麦克风和电脑声音，结束后存成一条 MP3。", "The microphone and the computer's sound together; one MP3 at the end.");
+        MeetInfo.Text = V.T("麦克风 + 电脑声音 → 一条 MP3", "Microphone + computer sound → one MP3");
         MeetRecentTitle.Text = V.T("最近的会议", "Recent meetings");
         _meeting.Changed += () => Dispatcher.BeginInvoke(() => { try { RenderMeeting(); } catch (Exception ex) { Log.Error("meeting: render", ex); } });
 
@@ -161,7 +161,7 @@ public partial class MainWindow
             detail.SetResourceReference(TextBlock.ForegroundProperty, "Fg2");
             Grid.SetColumn(detail, 1);
             grid.Children.Add(detail);
-            var row = new Border { Style = (Style)FindResource("Tile"), Padding = new Thickness(12, 8, 12, 8), Margin = new Thickness(0, 0, 0, 6), Cursor = Cursors.Hand, Child = grid };
+            var row = new Border { Style = (Style)FindResource("Tile"), Padding = new Thickness(12, 6, 12, 6), Margin = new Thickness(0, 0, 0, 6), Cursor = Cursors.Hand, Child = grid };
             row.MouseLeftButtonUp += (_, _) => Process.Start(new ProcessStartInfo("explorer.exe", mp3 != null ? $"/select,\"{mp3}\"" : $"\"{folder}\"") { UseShellExecute = true });
             MeetRecentList.Children.Add(row);
         }
@@ -174,6 +174,18 @@ public partial class MainWindow
     }
 
     /// <summary>Every 250 ms: the meeting in the pill and on its page.</summary>
+    /// <summary>更多: the meetings folder in Explorer, the newest selected.</summary>
+    private void MeetMore_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var latest = VerjotFiles.RecentMeetings(1).FirstOrDefault();
+            string arg = latest.Mp3 != null ? $"/select,\"{latest.Mp3}\"" : $"\"{VerjotFiles.Root}\"";
+            Process.Start(new ProcessStartInfo("explorer.exe", arg) { UseShellExecute = true });
+        }
+        catch (Exception ex) { Log.Error("meeting: more", ex); }
+    }
+
     private void UpdateMeetingLive()
     {
         bool on = _meeting.IsRecording;

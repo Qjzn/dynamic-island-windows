@@ -209,7 +209,7 @@ public partial class MainWindow
     {
         NotesStore.Resync();   // the file may have been written by the Verjot sticky note meanwhile
         NotesList.Children.Clear();
-        foreach (var n in NotesStore.Notes)
+        foreach (var n in NotesStore.Notes.Take(5))   // the page shows the five latest; the sticky note holds the rest
         {
             var row = new Grid();
             row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
@@ -236,7 +236,7 @@ public partial class MainWindow
             // a click opens a long note in full (and folds it again)
             body.MouseLeftButtonUp += (_, _) =>
             {
-                if (!_openNotes.Remove(note)) _openNotes.Add(note);
+                OpenStickyNote();   // the note lives on the sticky: open it at that tab
                 RenderNotes();
             };
             NotesList.Children.Add(tile);

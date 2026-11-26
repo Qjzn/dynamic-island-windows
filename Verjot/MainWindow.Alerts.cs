@@ -59,8 +59,7 @@ public partial class MainWindow
         NotifyFilterSystem.Content = V.T("系统", "System");
         NotifyFilterOther.Content = V.T("其他", "Other");
         NotifyClear.Content = V.T("一键已读清除", "Read & clear");
-        NotifyFootnote.Text = V.T("微信和企业微信不发系统通知：它们来消息时，岛上只提示“有新消息”，点一下回到应用。",
-            "WeChat and WeCom send no system toasts: when a message comes, the island only says so — a click takes you to the app.");
+        NotifyFootnote.Text = V.T("微信和企业微信不弹系统通知，岛体只提示有新消息。", "WeChat and WeCom blink instead: the island says so.");
         NotifyList.Open += BringUp;
         NotifyList.Dismissed += n => _alerts.Remove(n);
         NotifyList.Resized += () => Remeasure();   // the cards unfold: the island grows with them
@@ -214,7 +213,7 @@ public partial class MainWindow
         else { title = n.Title; text = n.Body; }
 
         _alertShownAt = DateTime.Now;
-        int ms = _alertQueue.Count > 0 ? 6000 : 10000;   // unread notices wait; hovered ones do not close at all
+        int ms = 300000;   // five minutes: the notice stays until the user acts on it (hovering holds it open)
         // a click on the preview does what a click on the card does: the program comes up and the notice leaves
         ShowToast(glyph, title, text.Length == 0 ? null : text, () => { BringUp(n); _alerts.Remove(n); }, badge, ms: ms, keep: false);
 

@@ -279,7 +279,9 @@ public sealed class NoticeList : StackPanel
         var body = new TextBlock { Text = n.HasBody ? n.Body : "", FontSize = 12.5, TextWrapping = TextWrapping.Wrap, TextTrimming = TextTrimming.CharacterEllipsis, MaxHeight = 57, Margin = new Thickness(0, 3, 0, 0) };
         body.SetResourceReference(TextBlock.ForegroundProperty, "Fg");
         body.Visibility = n.HasBody && n.Body.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
-        body.ToolTip = n.HasBody && n.Body.Length > 0 ? n.Body : null;   // the whole text, without opening anything
+        var tip = n.HasBody && n.Body.Length > 0 && n.Body != n.Title ? n.Body : null;   // the full text, when there is one
+        if (tip is { Length: > 240 }) tip = tip[..240] + "…";
+        body.ToolTip = tip;
         var words = new StackPanel { Margin = new Thickness(12, 0, 8, 0), VerticalAlignment = VerticalAlignment.Center, Children = { head, body } };
 
         var dot = new Border { Width = 3, Height = 18, CornerRadius = new CornerRadius(1.5), Margin = new Thickness(0, 0, 9, 0), VerticalAlignment = VerticalAlignment.Center, Visibility = Visibility.Collapsed };

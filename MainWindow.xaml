@@ -142,7 +142,7 @@
             <Ellipse x:Name="RecDot" Width="10" Height="10" Fill="{DynamicResource Danger}" Visibility="Collapsed"/>
           </StackPanel>
 
-          <TextBlock x:Name="CompactTime" Grid.Column="1" Text="00:00" FontSize="13" FontWeight="SemiBold"
+          <TextBlock x:Name="CompactTime" Grid.Column="1" Text="00:00" FontSize="13" FontWeight="SemiBold"/>
                      HorizontalAlignment="Center" VerticalAlignment="Center"
                      MaxWidth="300" TextTrimming="CharacterEllipsis"/>
           <!-- karaoke: the line being sung, whole (the island sizes itself to it) -->
@@ -345,7 +345,10 @@
                 </Grid>
               </Border>
               <v:LevelWave x:Name="MeetWave" Height="34" Margin="4,10,0,0"/>
-              <TextBlock x:Name="MeetRecentTitle" Style="{StaticResource Caption}" Margin="4,10,0,0"/>
+              <DockPanel Margin="4,10,0,0">
+                <TextBlock x:Name="MeetRecentTitle" Style="{StaticResource Caption}" Margin="0" VerticalAlignment="Center"/>
+                <Button Style="{StaticResource GhostPill}" Content="更多" HorizontalAlignment="Right" Padding="10,4" FontSize="11.5" Click="MeetMore_Click"/>
+              </DockPanel>
               <StackPanel x:Name="MeetRecentList" Margin="0,6,0,0"/>
             </StackPanel>
 
@@ -545,7 +548,7 @@
                       <ComboBox.ItemTemplate>
                         <DataTemplate>
                           <DockPanel LastChildFill="True">
-                            <TextBlock DockPanel.Dock="Right" Text="{Binding Hint}" Foreground="{DynamicResource Fg2}" FontSize="11.5"
+                            <TextBlock DockPanel.Dock="Right" Text="{Binding Hint}" Foreground="{DynamicResource Fg2}" FontSize="11.5"/>
                                        Margin="14,0,0,0" VerticalAlignment="Center"/>
                             <TextBlock Text="{Binding Name}" FontSize="13" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
                           </DockPanel>
@@ -562,19 +565,16 @@
                   <StackPanel>
                     <CheckBox x:Name="HoverSwitch" Style="{StaticResource Switch}" Click="Behavior_Click" Content="Раскрывать при наведении"/>
                     <CheckBox x:Name="YieldSwitch" Style="{StaticResource Switch}" Click="Behavior_Click" Content="Уступать курсору"/>
-                    <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,-4,0,6"
-                               Text="Курсор пролетает по острову (в игре, по пути к вкладкам) — остров становится прозрачным и пропускает клики к окну под ним. Задержите на нём курсор или упритесь в верхний край — и он вернётся. В играх на весь экран не мешает совсем."/>
+                    <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,-4,0,6" Text="光标快速掠过时岛体会让开，停留或贴住屏幕顶边就回来。"/>
                     <CheckBox x:Name="PlacePerAppSwitch" Style="{StaticResource Switch}" Click="Behavior_Click" Content="Своё место для каждой программы"/>
-                    <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,-4,0,6"
-                               Text="Передвиньте остров, пока программа впереди, — он запомнит это место и будет сам уезжать туда, когда она впереди. «Выровнять по центру» в меню острова возвращает этой программе обычное место."/>
+                    <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,-4,0,6" Text="在某个程序前面拖动岛体，它会记住这个位置。"/>
                     <CheckBox x:Name="SmartSwitch" Style="{StaticResource Switch}" Click="Behavior_Click" Content="Умный остров"/>
-                    <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,-4,0,6"
-                               Text="Открывается на том, что важно сейчас (таймер, звонок, скопированное, музыка) или на вкладке, которую вы обычно открываете в это время. Пока вы печатаете, не раскрывается от курсора, а сообщения ждут паузы. При низком заряде ноутбука включает облегчённую графику. Привычки хранятся только на этом ПК."/>
+                    <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,-4,0,6" Text="按当前场景自动切换，打字时不会被误触。"/>
                     <Button Style="{StaticResource GhostPill}" HorizontalAlignment="Left" Padding="12,6" Margin="0,0,0,10"
                             Content="Забыть привычки" Click="ResetHabits_Click"/>
                     <TextBlock Text="Прятать остров поверх программ" FontSize="13" Margin="0,6,0,6"/>
                     <WrapPanel x:Name="HideAppChips"/>
-                    <TextBlock x:Name="HideAppsEmpty" Style="{StaticResource Muted}" Text="Например, игры без полного экрана или программы для созвонов" TextWrapping="Wrap" Margin="0,0,0,6"/>
+                    <TextBlock x:Name="HideAppsEmpty" Style="{StaticResource Muted}" TextWrapping="Wrap" Text="例如游戏或会议软件。" Margin="0,0,0,6"/>
                     <DockPanel Margin="0,0,0,6">
                       <Button DockPanel.Dock="Right" Style="{StaticResource GhostPill}" Padding="12,6" Margin="8,0,0,0" Content="Добавить" Click="HideAppAdd_Click"/>
                       <ComboBox x:Name="HideAppPicker" Style="{StaticResource SoftCombo}" ToolTip="Программы, запущенные сейчас"/>
@@ -593,8 +593,7 @@
                     <CheckBox x:Name="ProgressSwitch" Style="{StaticResource Switch}" Click="Behavior_Click" Content="Копирование, распаковка и другие долгие задачи — на острове"/>
                     <CheckBox x:Name="MonitorSwitch" Style="{StaticResource Switch}" Click="Behavior_Click" Content="Переходить на монитор, где сейчас курсор"/>
                     <CheckBox x:Name="CaptureSwitch" Style="{StaticResource Switch}" Click="Behavior_Click" Content="Скрывать остров на скриншотах и демонстрации экрана"/>
-                    <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,-4,0,8"
-                               Text="Если выключить, остров будет виден на скриншотах, записи и в Zoom/Discord — стекло при этом продолжает работать. Пока работает запись NVIDIA, остров сам остаётся видимым — иначе она не пишет рабочий стол"/>
+                    <TextBlock Style="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,-4,0,8" Text="关闭后录屏和截图里不会出现岛体。"/>
 
                     <CheckBox x:Name="FullscreenSwitch" Style="{StaticResource Switch}" Click="Behavior_Click" Content="Прятать в играх и полноэкранном режиме"/>
                     <DockPanel Margin="0,0,0,10">
