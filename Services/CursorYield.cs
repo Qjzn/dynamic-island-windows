@@ -14,7 +14,7 @@ public sealed class CursorYield
     /// <summary>Entering faster than this (px/s, over the last ~60 ms) is passing by.</summary>
     public const double FastPxPerSec = 1200;
     /// <summary>Resting this long (moving less than <see cref="StillPx"/>) brings the island back.</summary>
-    public const int DwellMs = 350;
+    public const int DwellMs = 200;
     public const double StillPx = 5;
 
     private readonly List<(long Ms, Point P)> _trail = [];

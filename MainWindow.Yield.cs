@@ -30,7 +30,7 @@ public partial class MainWindow
     /// <summary>~30 times a second, from the gaze loop.</summary>
     private void UpdateYield(Native.POINT cursor)
     {
-        if (!_settings.YieldToCursor || _mode != Mode.Compact || _dragging || _hidden || _fullscreenHidden || !Island.IsVisible)
+        if (!_settings.YieldToCursor || _mode != Mode.Compact || _dragging || _hidden || _fullscreenHidden || !Island.IsVisible || _alerts.Unread > 0)
         {
             if (_yield.Reset()) StopYield(reopen: false);
             return;
