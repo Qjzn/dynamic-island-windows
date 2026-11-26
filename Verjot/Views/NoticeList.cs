@@ -17,13 +17,12 @@ namespace DynamicIsland.Views;
 public sealed class NoticeList : StackPanel
 {
     public event Action<Notice>? Open;
-    public event Action<Notice>? Keep;
-    public event Action<Notice>? Copy;
     public event Action<Notice>? Dismissed;
     public event Action? Touched;
 
     private sealed class Row
     {
+        public bool Opened;   // the first click opened the program; the next click on the card dismisses it
         public required Notice Notice;
         public required Grid Root;
         public required Border Face;
@@ -309,28 +308,16 @@ public sealed class NoticeList : StackPanel
         root.Children.Add(face);
         var row = new Row { Notice = n, Root = root, Face = face, Body = body, Time = time, RepeatTag = repeatTag, Dot = dot, Actions = actions, Move = move };
 
-        void Button(string zh, string en, Action act)
-        {
-            var b = new Button { Content = V.T(zh, en), FontSize = 11.5, Padding = new Thickness(8, 3, 8, 3), Margin = new Thickness(4, 0, 0, 0), VerticalAlignment = VerticalAlignment.Center };
-            b.SetResourceReference(StyleProperty, "ToolChip");
-            b.Click += (_, _) => { Touched?.Invoke(); act(); };
-            actions.Children.Add(b);
-        }
-        Button(n.HasBody ? "打开" : "查看", n.HasBody ? "Open" : "Show", () => Open?.Invoke(n));
-        if (n.HasBody && (n.Body.Length > 120 || n.Body.Contains('\n')))
-            Button("展开", "More", () => ToggleText(row));   // reading a long one needs no click that opens anything
         if (n.HasBody && (n.Body.Length > 0 || n.Title.Length > 0))
         {
-            Button("记下", "Keep", () => Keep?.Invoke(n));
-            Button("复制", "Copy", () => Copy?.Invoke(n));
         }
-        Button("移除", "Dismiss", () => Leave(row, 1));
 
         face.MouseEnter += (_, _) => { Fade(actions, 1, true); time.Visibility = Visibility.Collapsed; };
         face.MouseLeave += (_, _) => { if (_drag?.Row == row) return; Fade(actions, 0, false); time.Visibility = Visibility.Visible; };
         face.MouseLeftButtonDown += (_, e) => { if (_drag != null) return; row.X.Stiffness = 520; row.X.Damping = 40; _drag = (row, e.GetPosition(this), row.X.Value, ' ', []); };
         face.MouseMove += (_, e) => { if (_drag is not { } d || d.Row != row) return; if (e.LeftButton != MouseButtonState.Pressed) { _drag = null; return; } MoveDrag(row, e); };
         face.MouseLeftButtonUp += (_, _) => { if (_drag is not { } d || d.Row != row) return; if (d.Axis == 'x') Release(row, face); else Click(row); };
+        this.MouseLeftButtonUp += (_, _) => _drag = null;   // a release outside a card must not wedge the drag state
         face.LostMouseCapture += (_, _) => { if (_drag?.Row == row && _drag.Value.Axis == 'x') Release(row, face); };
         return row;
     }

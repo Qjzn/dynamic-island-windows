@@ -62,8 +62,6 @@ public partial class MainWindow
         NotifyFootnote.Text = V.T("微信和企业微信不发系统通知：它们来消息时，岛上只提示“有新消息”，点一下回到应用。",
             "WeChat and WeCom send no system toasts: when a message comes, the island only says so — a click takes you to the app.");
         NotifyList.Open += BringUp;
-        NotifyList.Keep += KeepNotice;
-        NotifyList.Copy += CopyNotice;
         NotifyList.Dismissed += n => _alerts.Remove(n);
         NotifyList.Resized += () => Remeasure();   // the cards unfold: the island grows with them
         _alerts.Added += n => Dispatcher.BeginInvoke(() => OnAlertAdded(n));
@@ -368,25 +366,7 @@ public partial class MainWindow
         catch (Exception ex) { Log.Write("alerts: start " + target + ": " + ex.GetType().Name + ": " + ex.Message); return false; }
     }
 
-    private void KeepNotice(Notice n)
-    {
-        string text = n.HasBody ? string.Join("\n", new[] { n.Title, n.Body }.Where(s => s.Length > 0)) : "";
-        if (text.Length == 0) return;
-        VerjotFiles.AppendNote(V.F("{0}：{1}", "{0}: {1}", n.Sender.Name, text));
-        ShowToast("\uE70B", V.T("已记下", "Kept"), null, ms: 2200);
-    }
 
-    private void CopyNotice(Notice n)
-    {
-        try
-        {
-            string text = n.HasBody ? string.Join("\n", new[] { n.Title, n.Body }.Where(s => s.Length > 0)) : "";
-            if (text.Length == 0) return;
-            Clipboard.SetDataObject(text);
-            ShowToast("\uE8C8", V.T("已复制", "Copied"), null, ms: 1800);
-        }
-        catch (Exception ex) { Log.Write("alerts: copy: " + ex.GetType().Name); }
-    }
 
     // ---------------------------------------------------------------- the page's buttons
 

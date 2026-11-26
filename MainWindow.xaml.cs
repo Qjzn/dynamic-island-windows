@@ -137,6 +137,19 @@ public partial class MainWindow : Window
         var up = new DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
         up.Tick += (_, _) => { up.Stop(); StartupGuard.Done(); };
         up.Start();
+        // hovering a tab opens its page: act inside the tab, not through menus
+        var hoverTab = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(280) };
+        RadioButton? hoverTarget = null;
+        foreach (var t in AllPageTabs)
+        {
+            t.MouseEnter += (_, _) => { hoverTarget = t; hoverTab.Stop(); hoverTab.Start(); };
+            t.MouseLeave += (_, _) => { if (hoverTarget == t) { hoverTarget = null; hoverTab.Stop(); } };
+        }
+        hoverTab.Tick += (_, _) =>
+        {
+            hoverTab.Stop();
+            if (hoverTarget is { } t && _mode == Mode.Expanded && t.IsChecked != true) t.IsChecked = true;
+        };
         Safely("theme", ApplyThemeLocal);
         Safely("character", () => Character.Kind = _settings.Character);
         Safely("glass", InitGlass);
