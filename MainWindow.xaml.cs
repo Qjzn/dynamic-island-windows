@@ -818,6 +818,7 @@ public partial class MainWindow : Window
 
         foreach (var page in AllPages)
             page.Visibility = Visibility.Collapsed;
+        if (_mode == Mode.Expanded && CursorOnIsland()) _collapseDelay.Stop();   // switching pages must not fold under the cursor
 
         Reveal(CurrentPage, 0.98, slide, 0);
         UpdatePageDots();
@@ -918,7 +919,14 @@ public partial class MainWindow : Window
             Squish(1 - 0.045 * LiquidK);
             if (!Services.Motion.Reduced) { _press.Target = 96; StartRendering(); }
         }
-        if (interactive) return;
+        if (interactive)
+        {
+            // a control gets the click, whatever happened before: no stale capture, no half drag
+            if (Island.IsMouseCaptured) Island.ReleaseMouseCapture();
+            _pressed = false;
+            _dragging = false;
+            return;
+        }
         _pressed = true;
         _dragging = false;
         _pressCursor = CursorDip();
